@@ -22,20 +22,20 @@ export function ChatPanel() {
     <div
       className={cn(
         'w-96 h-full shrink-0',
-        'bg-zinc-950/80 backdrop-blur-md',
-        'border-l border-zinc-800',
+        'bg-surface-overlay backdrop-blur-md',
+        'border-l border-border-default',
         'flex flex-col'
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-cyan-400" />
-          <span className="text-sm font-semibold text-zinc-200">AI Assistant</span>
+          <span className="text-sm font-semibold text-foreground">AI Assistant</span>
         </div>
         <button
           onClick={() => setChatOpen(false)}
-          className="p-1 rounded-md hover:bg-zinc-800/50 text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
         >
           <X size={14} />
         </button>
@@ -45,9 +45,9 @@ export function ChatPanel() {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
-            <Sparkles size={24} className="text-zinc-700 mb-3" />
-            <p className="text-sm text-zinc-500 mb-1">Describe your architecture</p>
-            <p className="text-xs text-zinc-600">
+            <Sparkles size={24} className="text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground mb-1">Describe your architecture</p>
+            <p className="text-xs text-muted-foreground/70">
               Try: "Design a URL shortener with API gateway, auth service, and Postgres"
             </p>
           </div>
@@ -62,7 +62,7 @@ export function ChatPanel() {
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:150ms]" />
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:300ms]" />
             </div>
-            <span className="text-xs text-zinc-500">Thinking...</span>
+            <span className="text-xs text-muted-foreground">Thinking...</span>
           </div>
         )}
         <div ref={messagesEndRef} />

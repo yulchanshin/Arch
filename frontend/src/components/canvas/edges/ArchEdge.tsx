@@ -38,7 +38,9 @@ function ArchEdgeComponent({
         id={id}
         path={edgePath}
         style={{
-          stroke: selected ? '#22d3ee' : '#3f3f46',
+          stroke: selected
+            ? 'var(--arch-edge-selected)'
+            : 'var(--arch-edge-default)',
           strokeWidth: selected ? 2 : 1.5,
           strokeDasharray: isAnimated ? '5 5' : undefined,
         }}
@@ -52,14 +54,14 @@ function ArchEdgeComponent({
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               pointerEvents: 'all',
             }}
-            className="px-1.5 py-0.5 bg-zinc-900/90 border border-zinc-800 rounded text-[10px] font-mono text-zinc-400 whitespace-nowrap"
+            className="px-1.5 py-0.5 bg-background/90 backdrop-blur-sm border border-border rounded text-[10px] font-mono text-muted-foreground whitespace-nowrap"
           >
             {label && <span>{label}</span>}
             {protocol && (
-              <span className="text-zinc-500 ml-1 uppercase">{protocol}</span>
+              <span className="text-muted-foreground/70 ml-1 uppercase">{protocol}</span>
             )}
             {latency && (
-              <span className="text-zinc-600 ml-1">{latency}</span>
+              <span className="text-muted-foreground/70 ml-1">{latency}</span>
             )}
           </div>
         </EdgeLabelRenderer>

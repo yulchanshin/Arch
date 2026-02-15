@@ -16,11 +16,11 @@ export function ChatMessage({ message }: Props) {
       <div
         className={cn(
           'shrink-0 w-6 h-6 rounded-md flex items-center justify-center mt-0.5',
-          isUser ? 'bg-zinc-800' : 'bg-cyan-500/10'
+          isUser ? 'bg-secondary' : 'bg-cyan-500/10'
         )}
       >
         {isUser ? (
-          <User size={12} className="text-zinc-400" />
+          <User size={12} className="text-muted-foreground" />
         ) : (
           <Sparkles size={12} className="text-cyan-400" />
         )}
@@ -28,8 +28,8 @@ export function ChatMessage({ message }: Props) {
 
       <div className={cn('flex-1 min-w-0', isUser && 'text-right')}>
         <p className={cn(
-          'text-sm text-zinc-200 leading-relaxed',
-          isUser && 'bg-zinc-900 rounded-md px-3 py-2 inline-block text-left'
+          'text-sm text-foreground leading-relaxed',
+          isUser && 'bg-secondary rounded-md px-3 py-2 inline-block text-left'
         )}>
           {message.content}
         </p>
@@ -38,14 +38,14 @@ export function ChatMessage({ message }: Props) {
           <div className="mt-1.5">
             <button
               onClick={() => setShowThought(!showThought)}
-              className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
             >
               {showThought ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
               <span>Thought process</span>
             </button>
             {showThought && (
-              <div className="mt-1 px-2.5 py-2 bg-zinc-900/50 border border-zinc-800/50 rounded-md">
-                <p className="text-[11px] font-mono text-zinc-500 leading-relaxed whitespace-pre-wrap">
+              <div className="mt-1 px-2.5 py-2 bg-secondary border border-border rounded-md">
+                <p className="text-[11px] font-mono text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {message.thought_process}
                 </p>
               </div>

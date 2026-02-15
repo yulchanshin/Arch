@@ -43,7 +43,7 @@ export function ChatInput() {
   };
 
   return (
-    <div className="border-t border-zinc-800 px-4 py-3">
+    <div className="border-t border-border-default px-4 py-3">
       {messages.length === 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2.5">
           {QUICK_PROMPTS.map((prompt) => (
@@ -53,7 +53,7 @@ export function ChatInput() {
                 setValue(prompt);
                 textareaRef.current?.focus();
               }}
-              className="px-2 py-1 text-[10px] text-zinc-500 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800/80 hover:text-zinc-400 transition-colors"
+              className="px-2 py-1 text-[10px] text-muted-foreground bg-secondary border border-border rounded-md hover:bg-accent hover:text-foreground transition-colors"
             >
               {prompt}
             </button>
@@ -72,8 +72,8 @@ export function ChatInput() {
           rows={1}
           className={cn(
             'flex-1 resize-none px-3 py-2 text-sm',
-            'bg-zinc-900 border border-zinc-800 rounded-md',
-            'text-zinc-200 placeholder:text-zinc-600',
+            'bg-secondary border border-border rounded-md',
+            'text-foreground placeholder:text-muted-foreground',
             'focus:outline-none focus:ring-1 focus:ring-cyan-500/50',
             'max-h-[120px]'
           )}

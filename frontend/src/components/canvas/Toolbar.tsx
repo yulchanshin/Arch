@@ -6,6 +6,8 @@ import {
   Redo2,
   MessageSquare,
   Save,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { useStore } from '@/store';
@@ -30,10 +32,10 @@ function ToolbarButton({
       disabled={disabled}
       title={title}
       className={cn(
-        'p-1.5 rounded-md text-zinc-400 transition-colors',
-        'hover:bg-zinc-800/50 hover:text-zinc-200',
-        'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400',
-        active && 'text-cyan-400 bg-zinc-800/50'
+        'p-1.5 rounded-md text-muted-foreground transition-colors',
+        'hover:bg-secondary hover:text-foreground',
+        'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground',
+        active && 'text-cyan-400 bg-secondary'
       )}
     >
       {children}
@@ -42,7 +44,7 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-4 bg-zinc-800" />;
+  return <div className="w-px h-4 bg-border-default" />;
 }
 
 export function Toolbar() {
@@ -53,14 +55,16 @@ export function Toolbar() {
   const canRedo = useStore((s) => s.canRedo);
   const chatOpen = useStore((s) => s.chatOpen);
   const toggleChat = useStore((s) => s.toggleChat);
+  const theme = useStore((s) => s.theme);
+  const toggleTheme = useStore((s) => s.toggleTheme);
 
   return (
     <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
       <div
         className={cn(
           'flex items-center gap-0.5 px-2 py-1',
-          'bg-zinc-950/80 backdrop-blur-md',
-          'border border-zinc-800 rounded-md',
+          'bg-surface-overlay backdrop-blur-md',
+          'border border-border-default rounded-md',
           'shadow-sm'
         )}
       >
@@ -90,6 +94,12 @@ export function Toolbar() {
         </ToolbarButton>
         <ToolbarButton onClick={toggleChat} active={chatOpen} title="Toggle chat">
           <MessageSquare size={15} />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </ToolbarButton>
       </div>
     </div>

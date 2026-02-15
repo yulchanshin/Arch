@@ -58,13 +58,13 @@ export function DraggableNodeItem({ nodeType }: Props) {
       className={cn(
         'flex items-center gap-2.5 px-3 py-2 rounded-md cursor-grab',
         'border border-transparent',
-        'hover:bg-zinc-800/50 hover:border-zinc-700/50',
+        'hover:bg-secondary hover:border-border-subtle',
         'active:cursor-grabbing',
         'transition-colors duration-150'
       )}
     >
       <Icon size={14} className={color} />
-      <span className="text-xs text-zinc-400 font-medium">{label}</span>
+      <span className="text-xs text-foreground font-medium">{label}</span>
     </div>
   );
 }

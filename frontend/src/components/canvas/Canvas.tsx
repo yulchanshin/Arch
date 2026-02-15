@@ -7,8 +7,10 @@ import {
   type NodeTypes,
   type EdgeTypes,
   useReactFlow,
+  ConnectionMode,
 } from '@xyflow/react';
 import { useStore } from '@/store';
+import type { ColorMode } from '@xyflow/react';
 import type { AppNode, NodeData, NodeType } from '@/types/graph';
 import { ServiceNode } from './nodes/ServiceNode';
 import { DatabaseNode } from './nodes/DatabaseNode';
@@ -49,6 +51,8 @@ export function Canvas() {
   const selectNode = useStore((s) => s.selectNode);
   const selectEdge = useStore((s) => s.selectEdge);
   const pushSnapshot = useStore((s) => s.pushSnapshot);
+  const theme = useStore((s) => s.theme);
+  const colorMode: ColorMode = theme === 'light' ? 'light' : 'dark';
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -97,6 +101,8 @@ export function Canvas() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
+        colorMode={colorMode}
+        connectionMode={ConnectionMode.Loose}
         onNodeClick={(_e, node) => selectNode(node.id)}
         onEdgeClick={(_e, edge) => selectEdge(edge.id)}
         onPaneClick={() => {
@@ -105,7 +111,7 @@ export function Canvas() {
         }}
         fitView
         proOptions={{ hideAttribution: true }}
-        className="bg-zinc-950"
+        className="bg-canvas-bg"
         minZoom={0.1}
         maxZoom={2}
         deleteKeyCode={['Backspace', 'Delete']}
@@ -116,12 +122,12 @@ export function Canvas() {
           variant={BackgroundVariant.Dots}
           gap={25}
           size={1}
-          color="#27272a"
+          className="!text-canvas-dot"
         />
         <MiniMap
-          nodeColor="#3f3f46"
-          maskColor="rgba(9, 9, 11, 0.7)"
-          className="!bg-zinc-900 !border-zinc-800 !rounded-md"
+          nodeColor="var(--arch-handle)"
+          maskColor="var(--arch-surface-overlay)"
+          className="!bg-surface !border-border-default !rounded-md"
           position="bottom-left"
         />
       </ReactFlow>
