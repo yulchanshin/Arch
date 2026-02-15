@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build output
+dist/
+build/
+
+# Environment
+.env
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Claude / AI development files
+claude.md
+CLAUDE.md
+IMPLEMENTATION_PLAN.md
+.claude/
+
+# Package manager locks (optional — uncomment if you want to exclude)
+# package-lock.json
+
+# Misc dev artifacts
+*.tsbuildinfo
+.eslintcache
