@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -20,6 +20,7 @@ import { GatewayNode } from './nodes/GatewayNode';
 import { LoadBalancerNode } from './nodes/LoadBalancerNode';
 import { ArchEdge } from './edges/ArchEdge';
 import { NODE_TYPE_CONFIG } from '@/lib/constants';
+import { ContextMenu, useContextMenuItems, type ContextMenuState } from './ContextMenu';
 
 const nodeTypes: NodeTypes = {
   service: ServiceNode,
@@ -40,7 +41,8 @@ const defaultEdgeOptions = {
 
 export function Canvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>(null);
 
   const nodes = useStore((s) => s.nodes);
   const edges = useStore((s) => s.edges);
@@ -48,11 +50,29 @@ export function Canvas() {
   const onEdgesChange = useStore((s) => s.onEdgesChange);
   const onConnect = useStore((s) => s.onConnect);
   const addNode = useStore((s) => s.addNode);
+  const removeNode = useStore((s) => s.removeNode);
+  const removeEdge = useStore((s) => s.removeEdge);
   const selectNode = useStore((s) => s.selectNode);
   const selectEdge = useStore((s) => s.selectEdge);
   const pushSnapshot = useStore((s) => s.pushSnapshot);
   const theme = useStore((s) => s.theme);
+  const isLoading = useStore((s) => s.isLoading);
+  const consumeFitView = useStore((s) => s.consumeFitView);
   const colorMode: ColorMode = theme === 'light' ? 'light' : 'dark';
+
+  // Auto fitView when AI adds new nodes
+  useEffect(() => {
+    if (!isLoading && consumeFitView()) {
+      // Small delay to let ReactFlow render the new nodes
+      setTimeout(() => {
+        fitView({ padding: 0.2, duration: 400 });
+      }, 100);
+    }
+  }, [isLoading, consumeFitView, fitView]);
+
+  const onNodeDragStart = useCallback(() => {
+    pushSnapshot();
+  }, [pushSnapshot]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -88,6 +108,62 @@ export function Canvas() {
     [screenToFlowPosition, addNode, pushSnapshot]
   );
 
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: AppNode) => {
+      event.preventDefault();
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      if (!bounds) return;
+      setContextMenu({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+        nodeId: node.id,
+      });
+    },
+    []
+  );
+
+  const onEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: { id: string }) => {
+      event.preventDefault();
+      const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+      if (!bounds) return;
+      setContextMenu({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+        edgeId: edge.id,
+      });
+    },
+    []
+  );
+
+  const contextMenuItems = useContextMenuItems(contextMenu, {
+    deleteNode: (id) => {
+      pushSnapshot();
+      removeNode(id);
+      selectNode(null);
+    },
+    duplicateNode: (id) => {
+      const node = nodes.find((n) => n.id === id);
+      if (!node) return;
+      pushSnapshot();
+      const newNode: AppNode = {
+        id: `node_${node.data.nodeType}_${Date.now()}`,
+        type: node.type,
+        position: { x: node.position.x + 50, y: node.position.y + 50 },
+        data: { ...node.data },
+      };
+      addNode(newNode);
+    },
+    inspectNode: (id) => {
+      selectNode(id);
+    },
+    deleteEdge: (id) => {
+      pushSnapshot();
+      removeEdge(id);
+      selectEdge(null);
+    },
+  });
+
   return (
     <div ref={reactFlowWrapper} className="w-full h-full">
       <ReactFlow
@@ -96,16 +172,26 @@ export function Canvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStart={onNodeDragStart}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeContextMenu={onEdgeContextMenu}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
         colorMode={colorMode}
         connectionMode={ConnectionMode.Loose}
-        onNodeClick={(_e, node) => selectNode(node.id)}
-        onEdgeClick={(_e, edge) => selectEdge(edge.id)}
+        onNodeClick={(_e, node) => {
+          setContextMenu(null);
+          selectNode(node.id);
+        }}
+        onEdgeClick={(_e, edge) => {
+          setContextMenu(null);
+          selectEdge(edge.id);
+        }}
         onPaneClick={() => {
+          setContextMenu(null);
           selectNode(null);
           selectEdge(null);
         }}
@@ -131,6 +217,15 @@ export function Canvas() {
           position="bottom-left"
         />
       </ReactFlow>
+
+      {contextMenu && contextMenuItems.length > 0 && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenuItems}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }

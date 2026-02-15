@@ -8,14 +8,21 @@ export type ChatSlice = {
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;
+  lastFailedPrompt: string | null;
+  _pendingFitView: boolean;
   sendMessage: (prompt: string) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
   clearMessages: () => void;
+  clearError: () => void;
+  consumeFitView: () => boolean;
 };
 
 export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]], [], ChatSlice> = (set, get) => ({
   messages: [],
   isLoading: false,
   error: null,
+  lastFailedPrompt: null,
+  _pendingFitView: false,
 
   sendMessage: async (prompt) => {
     const userMessage: ChatMessage = {
@@ -53,6 +60,7 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
           );
 
       // Apply the patch
+      const hasNewNodes = aiResponse.actions.some((a) => a.op === 'add_node');
       if (aiResponse.actions.length > 0) {
         get().applyPatch(aiResponse.actions);
       }
@@ -68,12 +76,16 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
       set((state) => {
         state.messages.push(assistantMessage);
         state.isLoading = false;
+        if (hasNewNodes) {
+          state._pendingFitView = true;
+        }
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Something went wrong';
       set((state) => {
         state.isLoading = false;
         state.error = message;
+        state.lastFailedPrompt = prompt;
       });
       // Remove the snapshot since we failed
       set((state) => {
@@ -85,10 +97,45 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
     }
   },
 
+  retryLastMessage: async () => {
+    const { lastFailedPrompt } = get();
+    if (!lastFailedPrompt) return;
+
+    // Remove the failed user message before retrying
+    set((state) => {
+      const lastUserIdx = [...state.messages].reverse().findIndex((m) => m.role === 'user');
+      if (lastUserIdx !== -1) {
+        state.messages.splice(state.messages.length - 1 - lastUserIdx, 1);
+      }
+      state.error = null;
+      state.lastFailedPrompt = null;
+    });
+
+    await get().sendMessage(lastFailedPrompt);
+  },
+
   clearMessages: () => {
     set((state) => {
       state.messages = [];
       state.error = null;
+      state.lastFailedPrompt = null;
     });
+  },
+
+  clearError: () => {
+    set((state) => {
+      state.error = null;
+      state.lastFailedPrompt = null;
+    });
+  },
+
+  consumeFitView: () => {
+    const pending = get()._pendingFitView;
+    if (pending) {
+      set((state) => {
+        state._pendingFitView = false;
+      });
+    }
+    return pending;
   },
 });

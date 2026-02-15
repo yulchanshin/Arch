@@ -1,6 +1,80 @@
-import { X } from 'lucide-react';
+import { X, Trash2 } from 'lucide-react';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
+import type { NodeData, EdgeData, Provider, Tech, Protocol, NodeType } from '@/types/graph';
+
+const PROVIDERS: Provider[] = ['aws', 'gcp', 'azure', 'supabase', 'vercel', 'cloudflare'];
+const TECHS: Record<NodeType, Tech[]> = {
+  service: ['python', 'go', 'node', 'rust', 'java'],
+  database: ['postgres', 'mysql', 'mongodb'],
+  cache: ['redis', 'memcached'],
+  queue: ['kafka', 'rabbitmq', 'sqs'],
+  gateway: ['nginx', 'envoy', 'kong'],
+  load_balancer: ['nginx', 'envoy'],
+};
+const PROTOCOLS: Protocol[] = ['http', 'grpc', 'ws', 'tcp', 'amqp', 'kafka'];
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+      {children}
+    </label>
+  );
+}
+
+function SelectField<T extends string>({
+  value,
+  options,
+  onChange,
+  placeholder,
+}: {
+  value: T | undefined;
+  options: T[];
+  onChange: (val: T | undefined) => void;
+  placeholder?: string;
+}) {
+  return (
+    <select
+      value={value ?? ''}
+      onChange={(e) => onChange((e.target.value || undefined) as T | undefined)}
+      className={cn(
+        'w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm',
+        'text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50',
+        'appearance-none cursor-pointer',
+        !value && 'text-muted-foreground'
+      )}
+    >
+      <option value="">{placeholder ?? 'None'}</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function InputField({
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground"
+    />
+  );
+}
 
 export function InspectorPanel() {
   const selectedNodeId = useStore((s) => s.selectedNodeId);
@@ -27,6 +101,20 @@ export function InspectorPanel() {
 
   if (!selectedNode && !selectedEdge) return null;
 
+  const handleNodeUpdate = (data: Partial<NodeData>) => {
+    if (!selectedNode) return;
+    pushSnapshot();
+    updateNodeData(selectedNode.id, data);
+  };
+
+  const handleEdgeUpdate = (data: Partial<EdgeData>) => {
+    if (!selectedEdge) return;
+    pushSnapshot();
+    updateEdgeData(selectedEdge.id, data);
+  };
+
+  const techOptions = selectedNode ? TECHS[selectedNode.data.nodeType] ?? [] : [];
+
   return (
     <div
       className={cn(
@@ -51,64 +139,123 @@ export function InspectorPanel() {
         </button>
       </div>
 
-      <div className="px-3 py-2.5 space-y-3">
+      <div className="px-3 py-2.5 space-y-2.5 max-h-[60vh] overflow-y-auto">
         {selectedNode && (
           <>
+            {/* Label */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                Label
-              </label>
-              <input
-                type="text"
+              <FieldLabel>Label</FieldLabel>
+              <InputField
                 value={selectedNode.data.label}
-                onChange={(e) => {
-                  pushSnapshot();
-                  updateNodeData(selectedNode.id, { label: e.target.value });
-                }}
-                className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                onChange={(val) => handleNodeUpdate({ label: val })}
+                placeholder="Node label"
               />
             </div>
 
+            {/* Type (read-only) */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                Type
-              </label>
-              <p className="text-xs font-mono text-muted-foreground">{selectedNode.data.nodeType}</p>
+              <FieldLabel>Type</FieldLabel>
+              <p className="text-xs font-mono text-muted-foreground px-2 py-1.5">
+                {selectedNode.data.nodeType}
+              </p>
             </div>
 
-            {selectedNode.data.tech && (
-              <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                  Technology
-                </label>
-                <p className="text-xs font-mono text-muted-foreground">{selectedNode.data.tech}</p>
-              </div>
-            )}
-
-            {selectedNode.data.provider && (
-              <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                  Provider
-                </label>
-                <p className="text-xs font-mono text-muted-foreground">{selectedNode.data.provider}</p>
-              </div>
-            )}
-
+            {/* Provider */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                ID
-              </label>
-              <p className="text-[10px] font-mono text-muted-foreground break-all">{selectedNode.id}</p>
+              <FieldLabel>Provider</FieldLabel>
+              <SelectField
+                value={selectedNode.data.provider}
+                options={PROVIDERS}
+                onChange={(val) => handleNodeUpdate({ provider: val })}
+                placeholder="Select provider"
+              />
             </div>
 
+            {/* Tech */}
+            <div>
+              <FieldLabel>Technology</FieldLabel>
+              <SelectField
+                value={selectedNode.data.tech}
+                options={techOptions}
+                onChange={(val) => handleNodeUpdate({ tech: val })}
+                placeholder="Select technology"
+              />
+            </div>
+
+            {/* Replicas */}
+            <div>
+              <FieldLabel>Replicas</FieldLabel>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={selectedNode.data.replicas ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                  handleNodeUpdate({ replicas: val });
+                }}
+                placeholder="1"
+                className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground"
+              />
+            </div>
+
+            {/* Port */}
+            <div>
+              <FieldLabel>Port</FieldLabel>
+              <input
+                type="number"
+                min={1}
+                max={65535}
+                value={selectedNode.data.port ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                  handleNodeUpdate({ port: val });
+                }}
+                placeholder="8080"
+                className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground"
+              />
+            </div>
+
+            {/* Region */}
+            <div>
+              <FieldLabel>Region</FieldLabel>
+              <InputField
+                value={selectedNode.data.region ?? ''}
+                onChange={(val) => handleNodeUpdate({ region: val || undefined })}
+                placeholder="us-east-1"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <textarea
+                value={selectedNode.data.description ?? ''}
+                onChange={(e) => handleNodeUpdate({ description: e.target.value || undefined })}
+                placeholder="Optional description..."
+                rows={2}
+                className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground resize-none"
+              />
+            </div>
+
+            {/* ID */}
+            <div>
+              <FieldLabel>ID</FieldLabel>
+              <p className="text-[10px] font-mono text-muted-foreground break-all px-2 py-1">
+                {selectedNode.id}
+              </p>
+            </div>
+
+            {/* Delete */}
             <button
               onClick={() => {
                 pushSnapshot();
                 removeNode(selectedNode.id);
                 selectNode(null);
               }}
-              className="w-full mt-1 px-2 py-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md hover:bg-red-500/20 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 mt-1 px-2 py-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md hover:bg-red-500/20 transition-colors"
             >
+              <Trash2 size={12} />
               Delete Node
             </button>
           </>
@@ -116,38 +263,86 @@ export function InspectorPanel() {
 
         {selectedEdge && (
           <>
+            {/* Label */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                Label
-              </label>
-              <input
-                type="text"
+              <FieldLabel>Label</FieldLabel>
+              <InputField
                 value={selectedEdge.data?.label ?? ''}
-                onChange={(e) => {
-                  pushSnapshot();
-                  updateEdgeData(selectedEdge.id, { label: e.target.value });
-                }}
-                className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                onChange={(val) => handleEdgeUpdate({ label: val })}
+                placeholder="Connection label"
               />
             </div>
 
+            {/* Protocol */}
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                Connection
-              </label>
-              <p className="text-[10px] font-mono text-muted-foreground">
+              <FieldLabel>Protocol</FieldLabel>
+              <SelectField
+                value={selectedEdge.data?.protocol}
+                options={PROTOCOLS}
+                onChange={(val) => handleEdgeUpdate({ protocol: val })}
+                placeholder="Select protocol"
+              />
+            </div>
+
+            {/* Latency */}
+            <div>
+              <FieldLabel>Latency</FieldLabel>
+              <InputField
+                value={selectedEdge.data?.latency ?? ''}
+                onChange={(val) => handleEdgeUpdate({ latency: val || undefined })}
+                placeholder="e.g. 50ms"
+              />
+            </div>
+
+            {/* Throughput */}
+            <div>
+              <FieldLabel>Throughput</FieldLabel>
+              <InputField
+                value={selectedEdge.data?.throughput ?? ''}
+                onChange={(val) => handleEdgeUpdate({ throughput: val || undefined })}
+                placeholder="e.g. 1000 rps"
+              />
+            </div>
+
+            {/* Animated */}
+            <div className="flex items-center justify-between">
+              <FieldLabel>Animated</FieldLabel>
+              <button
+                onClick={() => handleEdgeUpdate({ animated: !selectedEdge.data?.animated })}
+                className={cn(
+                  'w-8 h-4.5 rounded-full transition-colors relative',
+                  selectedEdge.data?.animated
+                    ? 'bg-cyan-500'
+                    : 'bg-zinc-700'
+                )}
+              >
+                <div
+                  className={cn(
+                    'absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white transition-transform',
+                    selectedEdge.data?.animated ? 'translate-x-4' : 'translate-x-0.5'
+                  )}
+                />
+              </button>
+            </div>
+
+            {/* Connection */}
+            <div>
+              <FieldLabel>Connection</FieldLabel>
+              <p className="text-[10px] font-mono text-muted-foreground px-2 py-1">
                 {selectedEdge.source} → {selectedEdge.target}
               </p>
             </div>
 
+            {/* Delete */}
             <button
               onClick={() => {
                 pushSnapshot();
                 removeEdge(selectedEdge.id);
                 selectEdge(null);
               }}
-              className="w-full mt-1 px-2 py-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md hover:bg-red-500/20 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 mt-1 px-2 py-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md hover:bg-red-500/20 transition-colors"
             >
+              <Trash2 size={12} />
               Delete Edge
             </button>
           </>
