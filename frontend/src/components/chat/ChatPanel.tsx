@@ -27,7 +27,8 @@ export function ChatPanel() {
         'w-96 h-full shrink-0',
         'bg-surface-overlay backdrop-blur-md',
         'border-l border-border-default',
-        'flex flex-col'
+        'flex flex-col',
+        'panel-slide-right'
       )}
     >
       {/* Header */}
@@ -89,13 +90,22 @@ export function ChatPanel() {
         )}
 
         {isLoading && (
-          <div className="flex items-center gap-2 px-3 py-2">
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:150ms]" />
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:300ms]" />
+          <div className="flex gap-2.5 panel-fade-up">
+            <div className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center mt-0.5 bg-cyan-500/10">
+              <Sparkles size={12} className="text-cyan-400" />
             </div>
-            <span className="text-xs text-muted-foreground">Thinking...</span>
+            <div className="flex-1 min-w-0">
+              <div className="bg-secondary/60 border border-border-default rounded-md px-3 py-2.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 thinking-dot" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 thinking-dot" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 thinking-dot" />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground ml-1">Generating architecture...</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />

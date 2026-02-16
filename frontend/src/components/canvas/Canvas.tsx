@@ -46,8 +46,8 @@ export function Canvas() {
 
   const nodes = useStore((s) => s.nodes);
   const edges = useStore((s) => s.edges);
-  const onNodesChange = useStore((s) => s.onNodesChange);
-  const onEdgesChange = useStore((s) => s.onEdgesChange);
+  const onNodesChangeRaw = useStore((s) => s.onNodesChange);
+  const onEdgesChangeRaw = useStore((s) => s.onEdgesChange);
   const onConnect = useStore((s) => s.onConnect);
   const addNode = useStore((s) => s.addNode);
   const removeNode = useStore((s) => s.removeNode);
@@ -59,6 +59,25 @@ export function Canvas() {
   const isLoading = useStore((s) => s.isLoading);
   const consumeFitView = useStore((s) => s.consumeFitView);
   const colorMode: ColorMode = theme === 'light' ? 'light' : 'dark';
+
+  // Wrap change handlers to snapshot before keyboard deletions
+  const onNodesChange = useCallback<typeof onNodesChangeRaw>(
+    (changes) => {
+      const hasRemove = changes.some((c) => c.type === 'remove');
+      if (hasRemove) pushSnapshot();
+      onNodesChangeRaw(changes);
+    },
+    [onNodesChangeRaw, pushSnapshot]
+  );
+
+  const onEdgesChange = useCallback<typeof onEdgesChangeRaw>(
+    (changes) => {
+      const hasRemove = changes.some((c) => c.type === 'remove');
+      if (hasRemove) pushSnapshot();
+      onEdgesChangeRaw(changes);
+    },
+    [onEdgesChangeRaw, pushSnapshot]
+  );
 
   // Auto fitView when AI adds new nodes
   useEffect(() => {

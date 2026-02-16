@@ -1,7 +1,10 @@
-import { X, Trash2 } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { X, Trash2, ChevronDown } from 'lucide-react';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
 import type { NodeData, EdgeData, Provider, Tech, Protocol, NodeType } from '@/types/graph';
+import { TechLogo, ProviderLogo } from '@/components/shared/TechLogo';
+import { getProviderLabel, getTechLabel } from '@/lib/logos';
 
 const PROVIDERS: Provider[] = ['aws', 'gcp', 'azure', 'supabase', 'vercel', 'cloudflare'];
 const TECHS: Record<NodeType, Tech[]> = {
@@ -19,6 +22,117 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
     <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
       {children}
     </label>
+  );
+}
+
+function InputField({
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground"
+    />
+  );
+}
+
+// Custom dropdown with logo support
+function LogoDropdown<T extends string>({
+  value,
+  options,
+  onChange,
+  placeholder,
+  renderOption,
+}: {
+  value: T | undefined;
+  options: T[];
+  onChange: (val: T | undefined) => void;
+  placeholder: string;
+  renderOption: (opt: T) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = useCallback(
+    (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [open, handleClickOutside]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={cn(
+          'w-full flex items-center justify-between px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm',
+          'focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer',
+          value ? 'text-foreground' : 'text-muted-foreground'
+        )}
+      >
+        <span className="flex items-center gap-2 min-w-0 truncate">
+          {value ? renderOption(value) : placeholder}
+        </span>
+        <ChevronDown size={12} className={cn('shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className={cn(
+          'absolute z-50 mt-1 w-full max-h-[200px] overflow-y-auto',
+          'bg-surface-overlay backdrop-blur-md',
+          'border border-border-default rounded-md shadow-sm',
+          'py-0.5'
+        )}>
+          {/* None option */}
+          <button
+            type="button"
+            onClick={() => { onChange(undefined); setOpen(false); }}
+            className={cn(
+              'w-full flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground',
+              'hover:bg-secondary transition-colors',
+              !value && 'bg-secondary/50'
+            )}
+          >
+            None
+          </button>
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={cn(
+                'w-full flex items-center gap-2 px-2 py-1.5 text-xs',
+                'hover:bg-secondary transition-colors',
+                opt === value ? 'text-foreground bg-secondary/50' : 'text-muted-foreground'
+              )}
+            >
+              {renderOption(opt)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -51,28 +165,6 @@ function SelectField<T extends string>({
         </option>
       ))}
     </select>
-  );
-}
-
-function InputField({
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  placeholder?: string;
-  type?: string;
-}) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full px-2 py-1.5 bg-secondary border border-border-default rounded-md text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500/50 placeholder:text-muted-foreground"
-    />
   );
 }
 
@@ -121,7 +213,8 @@ export function InspectorPanel() {
         'absolute bottom-3 right-3 z-10 w-72',
         'bg-surface-overlay backdrop-blur-md',
         'border border-border-default rounded-md',
-        'shadow-sm'
+        'shadow-sm',
+        'panel-fade-up'
       )}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
@@ -160,25 +253,37 @@ export function InspectorPanel() {
               </p>
             </div>
 
-            {/* Provider */}
+            {/* Provider - custom dropdown with logos */}
             <div>
               <FieldLabel>Provider</FieldLabel>
-              <SelectField
+              <LogoDropdown
                 value={selectedNode.data.provider}
                 options={PROVIDERS}
                 onChange={(val) => handleNodeUpdate({ provider: val })}
                 placeholder="Select provider"
+                renderOption={(provider) => (
+                  <>
+                    <ProviderLogo provider={provider} size={18} />
+                    <span>{getProviderLabel(provider)}</span>
+                  </>
+                )}
               />
             </div>
 
-            {/* Tech */}
+            {/* Technology - custom dropdown with logos */}
             <div>
               <FieldLabel>Technology</FieldLabel>
-              <SelectField
+              <LogoDropdown
                 value={selectedNode.data.tech}
                 options={techOptions}
                 onChange={(val) => handleNodeUpdate({ tech: val })}
                 placeholder="Select technology"
+                renderOption={(tech) => (
+                  <>
+                    <TechLogo tech={tech} size={18} />
+                    <span>{getTechLabel(tech)}</span>
+                  </>
+                )}
               />
             </div>
 

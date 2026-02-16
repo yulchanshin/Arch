@@ -63,12 +63,24 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
       const hasNewNodes = aiResponse.actions.some((a) => a.op === 'add_node');
       if (aiResponse.actions.length > 0) {
         get().applyPatch(aiResponse.actions);
+      } else {
+        // No actions = undo the empty snapshot
+        set((state) => {
+          if (state.past.length > 0) {
+            state.past.pop();
+          }
+        });
       }
+
+      const summary = aiResponse.summary
+        || (aiResponse.actions.length === 0
+          ? "I understood your request but didn't generate any changes. Could you be more specific?"
+          : 'Done.');
 
       const assistantMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: aiResponse.summary,
+        content: summary,
         thought_process: aiResponse.thought_process,
         timestamp: new Date().toISOString(),
       };
