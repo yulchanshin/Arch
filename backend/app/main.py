@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.routes.graph import router as graph_router
+from app.routes.persistence import router as persistence_router
 from app.middleware.errors import error_handler
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ app.add_middleware(
 app.middleware("http")(error_handler)
 
 app.include_router(graph_router)
+app.include_router(persistence_router)
 
 
 @app.get("/health")

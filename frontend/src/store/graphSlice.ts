@@ -9,11 +9,22 @@ import type {
 } from '@xyflow/react';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import type { AppStore } from './index';
+import {
+  saveGraph as apiSaveGraph,
+  loadGraph as apiLoadGraph,
+  listGraphs as apiListGraphs,
+  deleteGraphById as apiDeleteGraph,
+  type GraphSummary,
+} from '@/lib/api';
+import { toast } from 'sonner';
 
 export type GraphSlice = {
   nodes: AppNode[];
   edges: AppEdge[];
   metadata: GraphMetadata;
+  isSaving: boolean;
+  isLoadingGraph: boolean;
+  graphList: GraphSummary[];
   onNodesChange: OnNodesChange<AppNode>;
   onEdgesChange: OnEdgesChange<AppEdge>;
   onConnect: OnConnect;
@@ -27,6 +38,12 @@ export type GraphSlice = {
   applyPatch: (actions: GraphAction[]) => void;
   setGraph: (nodes: AppNode[], edges: AppEdge[], metadata?: Partial<GraphMetadata>) => void;
   clearGraph: () => void;
+  saveCurrentGraph: () => Promise<void>;
+  loadGraphById: (id: string) => Promise<void>;
+  fetchGraphList: () => Promise<void>;
+  deleteGraphById: (id: string) => Promise<void>;
+  newGraph: () => void;
+  renameGraph: (name: string) => void;
 };
 
 const defaultMetadata: GraphMetadata = {
@@ -41,6 +58,9 @@ export const createGraphSlice: StateCreator<AppStore, [['zustand/immer', never]]
   nodes: [],
   edges: [],
   metadata: { ...defaultMetadata },
+  isSaving: false,
+  isLoadingGraph: false,
+  graphList: [],
 
   onNodesChange: (changes) => {
     set((state) => {
@@ -205,6 +225,112 @@ export const createGraphSlice: StateCreator<AppStore, [['zustand/immer', never]]
       state.nodes = [];
       state.edges = [];
       state.metadata.version += 1;
+      state.metadata.lastModified = new Date().toISOString();
+    });
+  },
+
+  saveCurrentGraph: async () => {
+    const { nodes, edges, metadata, isSaving } = get();
+    if (isSaving) return;
+
+    set((state) => { state.isSaving = true; });
+
+    try {
+      const result = await apiSaveGraph({
+        id: metadata.id,
+        name: metadata.name,
+        nodes,
+        edges,
+        version: metadata.version,
+      });
+
+      set((state) => {
+        state.metadata.id = result.id;
+        state.metadata.version = result.version;
+        state.isSaving = false;
+      });
+
+      toast.success('Graph saved');
+      get().fetchGraphList();
+    } catch (error) {
+      set((state) => { state.isSaving = false; });
+      const message = error instanceof Error ? error.message : 'Save failed';
+      toast.error('Failed to save', { description: message });
+    }
+  },
+
+  loadGraphById: async (id) => {
+    set((state) => { state.isLoadingGraph = true; });
+
+    try {
+      const graph = await apiLoadGraph(id);
+
+      set((state) => {
+        state.nodes = graph.nodes;
+        state.edges = graph.edges;
+        state.metadata = {
+          id: graph.id,
+          name: graph.name,
+          version: graph.version,
+          createdAt: graph.createdAt,
+          lastModified: graph.updatedAt,
+        };
+        state.isLoadingGraph = false;
+        state.past = [];
+        state.future = [];
+      });
+
+      get().clearMessages();
+      toast.success('Graph loaded');
+    } catch (error) {
+      set((state) => { state.isLoadingGraph = false; });
+      const message = error instanceof Error ? error.message : 'Load failed';
+      toast.error('Failed to load graph', { description: message });
+    }
+  },
+
+  fetchGraphList: async () => {
+    try {
+      const data = await apiListGraphs();
+      set((state) => { state.graphList = data.graphs; });
+    } catch {
+      // Silent fail — list is non-critical
+    }
+  },
+
+  deleteGraphById: async (id) => {
+    try {
+      await apiDeleteGraph(id);
+      set((state) => {
+        state.graphList = state.graphList.filter((g) => g.id !== id);
+      });
+      toast.success('Graph deleted');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Delete failed';
+      toast.error('Failed to delete', { description: message });
+    }
+  },
+
+  newGraph: () => {
+    set((state) => {
+      state.nodes = [];
+      state.edges = [];
+      state.metadata = {
+        id: crypto.randomUUID(),
+        name: 'Untitled Architecture',
+        version: 1,
+        createdAt: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
+      };
+      state.past = [];
+      state.future = [];
+    });
+    get().clearMessages();
+  },
+
+  renameGraph: (name) => {
+    set((state) => {
+      state.metadata.name = name;
       state.metadata.lastModified = new Date().toISOString();
     });
   },

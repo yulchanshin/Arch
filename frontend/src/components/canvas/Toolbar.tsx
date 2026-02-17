@@ -55,6 +55,8 @@ export function Toolbar() {
   const canRedo = useStore((s) => s.canRedo);
   const chatOpen = useStore((s) => s.chatOpen);
   const toggleChat = useStore((s) => s.toggleChat);
+  const saveCurrentGraph = useStore((s) => s.saveCurrentGraph);
+  const isSaving = useStore((s) => s.isSaving);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
 
@@ -89,7 +91,7 @@ export function Toolbar() {
 
         <ToolbarDivider />
 
-        <ToolbarButton onClick={() => {}} title="Save">
+        <ToolbarButton onClick={saveCurrentGraph} disabled={isSaving} title="Save (Cmd+S)">
           <Save size={15} />
         </ToolbarButton>
         <ToolbarButton onClick={toggleChat} active={chatOpen} title="Toggle chat">

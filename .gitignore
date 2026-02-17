@@ -34,6 +34,7 @@ Thumbs.db
 claude.md
 CLAUDE.md
 IMPLEMENTATION_PLAN.md
+SUPABASE_PERSISTENCE_PLAN.md
 .claude/
 
 # Package manager locks (optional — uncomment if you want to exclude)

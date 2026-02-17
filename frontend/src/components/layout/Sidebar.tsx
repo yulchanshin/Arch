@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { PanelLeft, Hexagon } from 'lucide-react';
 import { useStore } from '@/store';
 import { DraggableNodeItem } from './DraggableNodeItem';
+import { GraphListPanel } from './GraphListPanel';
 import { NODE_TYPES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -8,6 +10,8 @@ export function Sidebar() {
   const sidebarCollapsed = useStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
   const metadata = useStore((s) => s.metadata);
+  const renameGraph = useStore((s) => s.renameGraph);
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <div
@@ -51,12 +55,40 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Footer */}
+      {/* Saved Graphs */}
+      {!sidebarCollapsed && <GraphListPanel />}
+
+      {/* Footer — editable graph name */}
       {!sidebarCollapsed && (
         <div className="px-4 py-3 border-t border-border-default">
-          <p className="text-[11px] font-mono text-muted-foreground truncate">
-            {metadata.name}
-          </p>
+          {isEditing ? (
+            <input
+              autoFocus
+              className="w-full bg-transparent text-[11px] font-mono text-foreground outline-none border-b border-cyan-400/50 pb-0.5"
+              defaultValue={metadata.name}
+              onBlur={(e) => {
+                const val = e.currentTarget.value.trim();
+                if (val && val !== metadata.name) renameGraph(val);
+                setIsEditing(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+                if (e.key === 'Escape') {
+                  setIsEditing(false);
+                }
+              }}
+            />
+          ) : (
+            <p
+              className="text-[11px] font-mono text-muted-foreground truncate cursor-pointer hover:text-foreground transition-colors"
+              onClick={() => setIsEditing(true)}
+              title="Click to rename"
+            >
+              {metadata.name}
+            </p>
+          )}
         </div>
       )}
     </div>
