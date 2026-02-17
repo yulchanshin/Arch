@@ -1,12 +1,9 @@
 import type { Node, Edge } from '@xyflow/react';
+import type { TechId } from '@/lib/techCatalog';
 
 export type NodeType = 'service' | 'database' | 'cache' | 'queue' | 'gateway' | 'load_balancer';
 export type Provider = 'aws' | 'gcp' | 'azure' | 'supabase' | 'vercel' | 'cloudflare';
-export type Tech =
-  | 'postgres' | 'mysql' | 'mongodb' | 'redis' | 'memcached'
-  | 'kafka' | 'rabbitmq' | 'sqs'
-  | 'python' | 'go' | 'node' | 'rust' | 'java'
-  | 'nginx' | 'envoy' | 'kong';
+export type Tech = TechId;
 export type Protocol = 'http' | 'grpc' | 'ws' | 'tcp' | 'amqp' | 'kafka';
 
 export type NodeData = {

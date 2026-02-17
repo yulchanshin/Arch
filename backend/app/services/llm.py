@@ -1,15 +1,72 @@
 from __future__ import annotations
 import json
 import logging
-from openai import AsyncOpenAI
+from anthropic import AsyncAnthropic
 
-from app.config import OPENAI_API_KEY, OPENAI_MODEL
+from app.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
 from app.models.actions import AIResponse
 from app.models.graph import GraphState
 
 logger = logging.getLogger(__name__)
 
-client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+
+# Static demo response returned when no API key is configured
+_DEMO_RESPONSE = AIResponse.model_validate({
+    "thought_process": "No API key configured. Returning a demo architecture.",
+    "actions": [
+        {
+            "op": "add_node",
+            "id": "node_gateway_api_01",
+            "type": "gateway",
+            "position": {"x": 0, "y": 200},
+            "data": {"label": "API Gateway", "nodeType": "gateway", "tech": "nginx"},
+        },
+        {
+            "op": "add_node",
+            "id": "node_service_app_01",
+            "type": "service",
+            "position": {"x": 400, "y": 100},
+            "data": {"label": "App Service", "nodeType": "service", "tech": "node"},
+        },
+        {
+            "op": "add_node",
+            "id": "node_database_main_01",
+            "type": "database",
+            "position": {"x": 800, "y": 100},
+            "data": {"label": "Main DB", "nodeType": "database", "tech": "postgres"},
+        },
+        {
+            "op": "add_node",
+            "id": "node_cache_session_01",
+            "type": "cache",
+            "position": {"x": 800, "y": 300},
+            "data": {"label": "Session Cache", "nodeType": "cache", "tech": "redis"},
+        },
+        {
+            "op": "add_edge",
+            "id": "edge_gateway_app_01",
+            "source": "node_gateway_api_01",
+            "target": "node_service_app_01",
+            "data": {"label": "routes traffic", "protocol": "http"},
+        },
+        {
+            "op": "add_edge",
+            "id": "edge_app_db_01",
+            "source": "node_service_app_01",
+            "target": "node_database_main_01",
+            "data": {"label": "reads/writes", "protocol": "tcp"},
+        },
+        {
+            "op": "add_edge",
+            "id": "edge_app_cache_01",
+            "source": "node_service_app_01",
+            "target": "node_cache_session_01",
+            "data": {"label": "caches sessions", "protocol": "tcp"},
+        },
+    ],
+    "summary": "Demo architecture: Gateway → App Service → Postgres + Redis (no API key configured)",
+})
 
 SYSTEM_PROMPT = """You are Arch, an expert system design architect. You help users design distributed system architectures by generating and modifying node graphs.
 
@@ -53,6 +110,16 @@ Each action has an "op" field. Available operations:
 - gateway: API gateways, entry points. Accent: blue.
 - load_balancer: Load balancers, traffic distributors. Accent: orange.
 
+## VALID TECHNOLOGIES PER NODE TYPE
+You MUST only use tech values from this list. Any other value will be rejected.
+
+- database: postgres, mysql, mariadb, sqlite, cockroachdb, planetscale, mongodb, dynamodb, cassandra, couchdb, firestore, pinecone, weaviate, qdrant, milvus, chroma, influxdb, timescaledb, clickhouse, elasticsearch, opensearch, meilisearch, typesense, algolia, s3, gcs, minio, r2
+- cache: redis, memcached, dragonfly, valkey
+- queue: kafka, rabbitmq, sqs, nats, pulsar
+- gateway: nginx, envoy, kong, traefik, apisix
+- load_balancer: nginx, envoy, traefik, haproxy
+- service: python, go, node, rust, java, dotnet, elixir, ruby, php, prometheus, grafana, datadog, jaeger, sentry, auth0, clerk, keycloak, firebase_auth, supabase_auth
+
 ## POSITIONING RULES (CRITICAL)
 - Grid unit: 250px horizontal, 200px vertical.
 - Left-to-right flow: Gateway → Load Balancer → Services → Databases/Caches/Queues.
@@ -76,6 +143,7 @@ Each action has an "op" field. Available operations:
 - If the user's request is unclear, make reasonable assumptions and explain in thought_process.
 - If no changes are needed, return an empty actions array with explanation in summary.
 - The "data" field in add_node MUST include "nodeType" matching the node type.
+- Return ONLY the JSON object. No markdown fences, no extra text.
 """
 
 
@@ -112,12 +180,14 @@ Analyze the current graph and return only the minimal actions needed to fulfill 
 
 
 async def call_llm(prompt: str, is_generate: bool = False) -> AIResponse:
+    if not ANTHROPIC_API_KEY:
+        return _DEMO_RESPONSE
     if is_generate:
         user_content = _build_generate_prompt(prompt)
     else:
         raise ValueError("Use call_llm_modify for modifications")
 
-    return await _call_openai(user_content)
+    return await _call_anthropic(user_content)
 
 
 async def call_llm_modify(
@@ -125,38 +195,49 @@ async def call_llm_modify(
     prompt: str,
     history: list[dict[str, str]],
 ) -> AIResponse:
+    if not ANTHROPIC_API_KEY:
+        return _DEMO_RESPONSE
     user_content = _build_modify_prompt(graph, prompt, history)
-    return await _call_openai(user_content)
+    return await _call_anthropic(user_content)
 
 
 async def call_llm_generate(prompt: str) -> AIResponse:
+    if not ANTHROPIC_API_KEY:
+        return _DEMO_RESPONSE
     user_content = _build_generate_prompt(prompt)
-    return await _call_openai(user_content)
+    return await _call_anthropic(user_content)
 
 
-async def _call_openai(user_content: str, retry: bool = True) -> AIResponse:
+async def _call_anthropic(user_content: str, retry: bool = True) -> AIResponse:
     try:
-        response = await client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response = await client.messages.create(
+            model=ANTHROPIC_MODEL,
+            system=SYSTEM_PROMPT,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_content},
             ],
-            response_format={"type": "json_object"},
             temperature=0.3,
             max_tokens=4096,
         )
 
-        content = response.choices[0].message.content
+        content = response.content[0].text
         if not content:
             raise ValueError("Empty response from LLM")
 
-        parsed = json.loads(content)
+        # Strip markdown fences if present
+        text = content.strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+
+        parsed = json.loads(text)
         return AIResponse.model_validate(parsed)
 
     except Exception as e:
         if retry:
             logger.warning(f"LLM call failed, retrying: {e}")
-            return await _call_openai(user_content, retry=False)
+            return await _call_anthropic(user_content, retry=False)
         logger.error(f"LLM call failed after retry: {e}")
         raise

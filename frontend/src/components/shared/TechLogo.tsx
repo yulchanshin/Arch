@@ -2,11 +2,10 @@ import { Icon } from '@iconify/react';
 import type { Provider, Tech } from '@/types/graph';
 import {
   PROVIDER_LOGOS,
-  TECH_LOGOS,
   getIconColor,
-  getTechLabel,
   getProviderLabel,
 } from '@/lib/logos';
+import { getTechEntry, getTechIconColor, getTechLabel } from '@/lib/techCatalog';
 import { cn } from '@/lib/utils';
 
 type TechLogoProps = {
@@ -24,8 +23,8 @@ type ProviderLogoProps = {
 };
 
 export function TechLogo({ tech, size = 16, className, showLabel }: TechLogoProps) {
-  const entry = TECH_LOGOS[tech];
-  const color = getIconColor(entry);
+  const entry = getTechEntry(tech);
+  const color = getTechIconColor(tech);
   const label = getTechLabel(tech);
 
   return (

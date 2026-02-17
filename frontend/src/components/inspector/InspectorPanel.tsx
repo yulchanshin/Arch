@@ -2,19 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Trash2, ChevronDown } from 'lucide-react';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
-import type { NodeData, EdgeData, Provider, Tech, Protocol, NodeType } from '@/types/graph';
+import type { NodeData, EdgeData, Provider, Tech, Protocol } from '@/types/graph';
 import { TechLogo, ProviderLogo } from '@/components/shared/TechLogo';
 import { getProviderLabel, getTechLabel } from '@/lib/logos';
+import { getTechnologiesForNodeType } from '@/lib/techCatalog';
 
 const PROVIDERS: Provider[] = ['aws', 'gcp', 'azure', 'supabase', 'vercel', 'cloudflare'];
-const TECHS: Record<NodeType, Tech[]> = {
-  service: ['python', 'go', 'node', 'rust', 'java'],
-  database: ['postgres', 'mysql', 'mongodb'],
-  cache: ['redis', 'memcached'],
-  queue: ['kafka', 'rabbitmq', 'sqs'],
-  gateway: ['nginx', 'envoy', 'kong'],
-  load_balancer: ['nginx', 'envoy'],
-};
 const PROTOCOLS: Protocol[] = ['http', 'grpc', 'ws', 'tcp', 'amqp', 'kafka'];
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -205,7 +198,9 @@ export function InspectorPanel() {
     updateEdgeData(selectedEdge.id, data);
   };
 
-  const techOptions = selectedNode ? TECHS[selectedNode.data.nodeType] ?? [] : [];
+  const techOptions = selectedNode
+    ? getTechnologiesForNodeType(selectedNode.data.nodeType).map((t) => t.id)
+    : [];
 
   return (
     <div
