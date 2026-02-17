@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, User, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { ChatMessage as ChatMessageType } from '@/types/actions';
 
@@ -12,7 +13,12 @@ export function ChatMessage({ message }: Props) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={cn('flex gap-2.5', isUser && 'flex-row-reverse')}>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      className={cn('flex gap-2.5', isUser && 'flex-row-reverse')}
+    >
       <div
         className={cn(
           'shrink-0 w-6 h-6 rounded-md flex items-center justify-center mt-0.5',
@@ -53,6 +59,6 @@ export function ChatMessage({ message }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

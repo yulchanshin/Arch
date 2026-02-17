@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.models.persistence import (
     GraphSaveRequest,
@@ -9,6 +9,7 @@ from app.models.persistence import (
     GraphListResponse,
 )
 from app.services.persistence import save_graph, get_graph, list_graphs, delete_graph
+from app.middleware.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/graphs", response_model=GraphSaveResponse)
-async def save(req: GraphSaveRequest):
+@limiter.limit("30/minute")
+async def save(request: Request, req: GraphSaveRequest):
     try:
         return save_graph(req)
     except Exception as e:
@@ -25,7 +27,8 @@ async def save(req: GraphSaveRequest):
 
 
 @router.get("/graphs", response_model=GraphListResponse)
-async def list_all():
+@limiter.limit("30/minute")
+async def list_all(request: Request):
     try:
         graphs = list_graphs()
         return GraphListResponse(graphs=graphs)
@@ -35,7 +38,8 @@ async def list_all():
 
 
 @router.get("/graphs/{graph_id}", response_model=GraphDetail)
-async def load(graph_id: str):
+@limiter.limit("30/minute")
+async def load(request: Request, graph_id: str):
     try:
         return get_graph(graph_id)
     except Exception as e:
@@ -44,7 +48,8 @@ async def load(graph_id: str):
 
 
 @router.delete("/graphs/{graph_id}")
-async def remove(graph_id: str):
+@limiter.limit("30/minute")
+async def remove(request: Request, graph_id: str):
     try:
         delete_graph(graph_id)
         return {"ok": True}

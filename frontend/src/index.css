@@ -120,7 +120,8 @@
   --arch-canvas-bg: oklch(0.11 0.008 270);
   --arch-canvas-dot: oklch(0.22 0.008 270);
   --arch-edge-default: oklch(0.40 0.012 270);
-  --arch-edge-selected: oklch(0.72 0.15 195);
+  --arch-edge-selected: oklch(0.74 0.18 195);
+  --arch-node-selected-glow: oklch(0.72 0.18 195 / 20%);
   --arch-handle: oklch(0.45 0.012 270);
   --arch-handle-border: oklch(0.38 0.01 270);
   --arch-node-bg: oklch(0.17 0.008 270);
@@ -172,6 +173,7 @@
   --arch-canvas-dot: oklch(0.85 0.006 270);
   --arch-edge-default: oklch(0.72 0.008 270);
   --arch-edge-selected: oklch(0.55 0.18 195);
+  --arch-node-selected-glow: oklch(0.45 0.18 195 / 15%);
   --arch-handle: oklch(0.65 0.008 270);
   --arch-handle-border: oklch(0.72 0.006 270);
   --arch-node-bg: oklch(0.99 0.003 270);
@@ -235,6 +237,11 @@
   transform: scale(1.6);
 }
 
+/* Selected node glow */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 1px var(--arch-edge-selected), 0 0 12px var(--arch-node-selected-glow);
+}
+
 /* ===== Custom scrollbars ===== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -255,30 +262,6 @@
 }
 .light ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.70 0.01 270);
-}
-
-/* ===== Panel slide animations ===== */
-.panel-slide-right {
-  animation: slideInRight 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.panel-slide-left {
-  animation: slideInLeft 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.panel-fade-up {
-  animation: fadeUp 150ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideInLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes fadeUp {
-  from { transform: translateY(8px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 
 /* ===== Thinking indicator ===== */

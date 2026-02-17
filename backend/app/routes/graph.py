@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from app.models.api import (
     GenerateRequest,
@@ -10,6 +10,7 @@ from app.models.api import (
 )
 from app.services.llm import call_llm_generate, call_llm_modify
 from app.services.validator import validate_actions
+from app.middleware.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,8 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_graph(req: GenerateRequest):
+@limiter.limit("10/minute")
+async def generate_graph(request: Request, req: GenerateRequest):
     try:
         ai_response = await call_llm_generate(req.prompt)
         ai_response = validate_actions(ai_response, current_graph=None)
@@ -28,7 +30,8 @@ async def generate_graph(req: GenerateRequest):
 
 
 @router.post("/modify", response_model=ModifyResponse)
-async def modify_graph(req: ModifyRequest):
+@limiter.limit("15/minute")
+async def modify_graph(request: Request, req: ModifyRequest):
     try:
         history = [{"role": m.role, "content": m.content} for m in req.history]
         ai_response = await call_llm_modify(req.graph, req.prompt, history)

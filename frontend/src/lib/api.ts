@@ -20,6 +20,9 @@ async function request<T>(path: string, body: unknown): Promise<T> {
   });
 
   if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error('Too many requests. Please wait a moment and try again.');
+    }
     const error = await res.json().catch(() => ({ detail: 'Network error' }));
     throw new Error(error.detail ?? `Request failed (${res.status})`);
   }
@@ -39,6 +42,9 @@ async function fetchApi<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error('Too many requests. Please wait a moment and try again.');
+    }
     const error = await res.json().catch(() => ({ detail: 'Network error' }));
     throw new Error(error.detail ?? `Request failed (${res.status})`);
   }

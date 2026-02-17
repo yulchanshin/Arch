@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Trash2, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
 import type { NodeData, EdgeData, Provider, Tech, Protocol } from '@/types/graph';
@@ -175,8 +176,6 @@ export function InspectorPanel() {
   const removeNode = useStore((s) => s.removeNode);
   const removeEdge = useStore((s) => s.removeEdge);
 
-  if (!inspectorOpen) return null;
-
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId)
     : null;
@@ -184,7 +183,7 @@ export function InspectorPanel() {
     ? edges.find((e) => e.id === selectedEdgeId)
     : null;
 
-  if (!selectedNode && !selectedEdge) return null;
+  const isVisible = inspectorOpen && (selectedNode || selectedEdge);
 
   const handleNodeUpdate = (data: Partial<NodeData>) => {
     if (!selectedNode) return;
@@ -203,13 +202,19 @@ export function InspectorPanel() {
     : [];
 
   return (
-    <div
+    <AnimatePresence>
+      {isVisible && (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      data-toolbar
       className={cn(
         'absolute bottom-3 right-3 z-10 w-72',
         'bg-surface-overlay backdrop-blur-md',
         'border border-border-default rounded-md',
-        'shadow-sm',
-        'panel-fade-up'
+        'shadow-sm'
       )}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
@@ -448,6 +453,8 @@ export function InspectorPanel() {
           </>
         )}
       </div>
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

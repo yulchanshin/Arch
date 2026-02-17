@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -8,10 +9,14 @@ import {
   Save,
   Sun,
   Moon,
+  Download,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useReactFlow } from '@xyflow/react';
+import { toast } from 'sonner';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
+import { downloadPng } from '@/lib/exportPng';
 
 function ToolbarButton({
   onClick,
@@ -27,10 +32,12 @@ function ToolbarButton({
   title: string;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
       disabled={disabled}
       title={title}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       className={cn(
         'p-1.5 rounded-md text-muted-foreground transition-colors',
         'hover:bg-secondary hover:text-foreground',
@@ -39,7 +46,7 @@ function ToolbarButton({
       )}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -59,9 +66,24 @@ export function Toolbar() {
   const isSaving = useStore((s) => s.isSaving);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
+  const graphName = useStore((s) => s.metadata.name);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      await downloadPng(`${graphName}_${timestamp}.png`);
+      toast.success('Exported as PNG');
+    } catch {
+      toast.error('Export failed. Try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
-    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10" data-toolbar>
       <div
         className={cn(
           'flex items-center gap-0.5 px-2 py-1',
@@ -93,6 +115,9 @@ export function Toolbar() {
 
         <ToolbarButton onClick={saveCurrentGraph} disabled={isSaving} title="Save (Cmd+S)">
           <Save size={15} />
+        </ToolbarButton>
+        <ToolbarButton onClick={handleExport} disabled={isExporting} title="Export as PNG">
+          <Download size={15} />
         </ToolbarButton>
         <ToolbarButton onClick={toggleChat} active={chatOpen} title="Toggle chat">
           <MessageSquare size={15} />

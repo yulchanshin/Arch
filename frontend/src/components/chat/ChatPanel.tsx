@@ -1,9 +1,18 @@
 import { useRef, useEffect } from 'react';
 import { X, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
+
+const panelVariants = {
+  hidden: { x: '100%', opacity: 0 },
+  visible: { x: 0, opacity: 1 },
+  exit: { x: '100%', opacity: 0 },
+};
+
+const panelTransition = { type: 'spring' as const, damping: 25, stiffness: 300 };
 
 export function ChatPanel() {
   const chatOpen = useStore((s) => s.chatOpen);
@@ -19,16 +28,20 @@ export function ChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, error]);
 
-  if (!chatOpen) return null;
-
   return (
-    <div
+    <AnimatePresence>
+      {chatOpen && (
+    <motion.div
+      variants={panelVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      transition={panelTransition}
       className={cn(
         'w-96 h-full shrink-0',
         'bg-surface-overlay backdrop-blur-md',
         'border-l border-border-default',
-        'flex flex-col',
-        'panel-slide-right'
+        'flex flex-col'
       )}
     >
       {/* Header */}
@@ -90,7 +103,7 @@ export function ChatPanel() {
         )}
 
         {isLoading && (
-          <div className="flex gap-2.5 panel-fade-up">
+          <div className="flex gap-2.5">
             <div className="shrink-0 w-6 h-6 rounded-md flex items-center justify-center mt-0.5 bg-cyan-500/10">
               <Sparkles size={12} className="text-cyan-400" />
             </div>
@@ -113,6 +126,8 @@ export function ChatPanel() {
 
       {/* Input */}
       <ChatInput />
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
