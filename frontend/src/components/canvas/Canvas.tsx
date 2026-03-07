@@ -10,7 +10,7 @@ import {
   ConnectionMode,
 } from '@xyflow/react';
 import { useStore } from '@/store';
-import type { ColorMode } from '@xyflow/react';
+
 import type { AppNode, NodeData, NodeType } from '@/types/graph';
 import { ServiceNode } from './nodes/ServiceNode';
 import { DatabaseNode } from './nodes/DatabaseNode';
@@ -55,10 +55,9 @@ export function Canvas() {
   const selectNode = useStore((s) => s.selectNode);
   const selectEdge = useStore((s) => s.selectEdge);
   const pushSnapshot = useStore((s) => s.pushSnapshot);
-  const theme = useStore((s) => s.theme);
   const isLoading = useStore((s) => s.isLoading);
   const consumeFitView = useStore((s) => s.consumeFitView);
-  const colorMode: ColorMode = theme === 'light' ? 'light' : 'dark';
+  const colorMode = 'light' as const;
 
   // Wrap change handlers to snapshot before keyboard deletions
   const onNodesChange = useCallback<typeof onNodesChangeRaw>(
@@ -233,7 +232,7 @@ export function Canvas() {
           nodeColor="var(--arch-handle)"
           maskColor="var(--arch-surface-overlay)"
           className="!bg-surface !border-border-default !rounded-md"
-          position="bottom-left"
+          position="bottom-right"
         />
       </ReactFlow>
 

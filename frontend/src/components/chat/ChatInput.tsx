@@ -43,7 +43,7 @@ export function ChatInput() {
   };
 
   return (
-    <div className="border-t border-border-default px-4 py-3">
+    <div className="border-t border-gray-200 px-4 py-3">
       {messages.length === 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2.5">
           {QUICK_PROMPTS.map((prompt) => (
@@ -53,7 +53,7 @@ export function ChatInput() {
                 setValue(prompt);
                 textareaRef.current?.focus();
               }}
-              className="px-2 py-1 text-[10px] text-muted-foreground bg-secondary border border-border rounded-md hover:bg-accent hover:text-foreground transition-colors"
+              className="px-2 py-1 text-[10px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors"
             >
               {prompt}
             </button>
@@ -72,9 +72,9 @@ export function ChatInput() {
           rows={1}
           className={cn(
             'flex-1 resize-none px-3 py-2 text-sm',
-            'bg-secondary border border-border rounded-md',
-            'text-foreground placeholder:text-muted-foreground',
-            'focus:outline-none focus:ring-1 focus:ring-cyan-500/50',
+            'bg-gray-50 border border-gray-200 rounded-xl',
+            'text-gray-900 placeholder:text-gray-400',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300',
             'max-h-[120px]'
           )}
         />
@@ -82,10 +82,10 @@ export function ChatInput() {
           onClick={handleSend}
           disabled={!value.trim() || isLoading}
           className={cn(
-            'p-2 rounded-md transition-colors',
-            'bg-cyan-500/10 text-cyan-400',
-            'hover:bg-cyan-500/20',
-            'disabled:opacity-30 disabled:cursor-not-allowed'
+            'p-2 rounded-xl transition-colors',
+            value.trim() && !isLoading
+              ? 'bg-gray-900 text-white hover:bg-gray-800'
+              : 'bg-gray-100 text-gray-300 cursor-not-allowed'
           )}
         >
           <Send size={14} />

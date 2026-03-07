@@ -1,4 +1,6 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { Toaster } from 'sonner';
 import { useStore } from '@/store';
 
@@ -6,8 +8,11 @@ export default function App() {
   const theme = useStore((s) => s.theme);
 
   return (
-    <>
-      <Layout />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/workspace" element={<Layout />} />
+      </Routes>
       <Toaster
         position="bottom-right"
         theme={theme}
@@ -21,6 +26,6 @@ export default function App() {
           },
         }}
       />
-    </>
+    </BrowserRouter>
   );
 }

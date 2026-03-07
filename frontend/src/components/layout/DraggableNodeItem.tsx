@@ -20,12 +20,21 @@ const iconMap = {
 } as const;
 
 const colorMap: Record<NodeType, string> = {
-  service: 'text-cyan-400',
-  database: 'text-amber-400',
-  cache: 'text-emerald-400',
-  queue: 'text-violet-400',
-  gateway: 'text-blue-400',
-  load_balancer: 'text-orange-400',
+  service: 'text-cyan-500',
+  database: 'text-amber-500',
+  cache: 'text-emerald-500',
+  queue: 'text-violet-500',
+  gateway: 'text-blue-500',
+  load_balancer: 'text-orange-500',
+};
+
+const bgMap: Record<NodeType, string> = {
+  service: 'bg-cyan-50',
+  database: 'bg-amber-50',
+  cache: 'bg-emerald-50',
+  queue: 'bg-violet-50',
+  gateway: 'bg-blue-50',
+  load_balancer: 'bg-orange-50',
 };
 
 const labelMap: Record<NodeType, string> = {
@@ -34,7 +43,7 @@ const labelMap: Record<NodeType, string> = {
   cache: 'Cache',
   queue: 'Queue',
   gateway: 'Gateway',
-  load_balancer: 'Load Balancer',
+  load_balancer: 'LB',
 };
 
 type Props = {
@@ -44,6 +53,7 @@ type Props = {
 export function DraggableNodeItem({ nodeType }: Props) {
   const Icon = iconMap[nodeType];
   const color = colorMap[nodeType];
+  const bg = bgMap[nodeType];
   const label = labelMap[nodeType];
 
   const onDragStart = (event: DragEvent) => {
@@ -56,15 +66,19 @@ export function DraggableNodeItem({ nodeType }: Props) {
       draggable
       onDragStart={onDragStart}
       className={cn(
-        'flex items-center gap-2.5 px-3 py-2 rounded-md cursor-grab',
+        'flex flex-col items-center gap-1.5 p-2.5 rounded-xl cursor-grab',
         'border border-transparent',
-        'hover:bg-secondary hover:border-border-subtle',
+        'hover:bg-gray-50 hover:border-gray-200',
         'active:cursor-grabbing',
-        'transition-colors duration-150'
+        'transition-all duration-150'
       )}
     >
-      <Icon size={14} className={color} />
-      <span className="text-xs text-foreground font-medium">{label}</span>
+      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', bg)}>
+        <Icon size={16} className={color} />
+      </div>
+      <span className="text-[10px] text-gray-500 font-medium leading-tight text-center">
+        {label}
+      </span>
     </div>
   );
 }

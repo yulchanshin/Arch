@@ -68,117 +68,69 @@
   --color-node-hover-border: var(--arch-node-hover-border);
 }
 
-/* ===== DARK THEME (default) ===== */
+/* ===== LIGHT-ONLY THEME ===== */
 :root {
-  --radius: 0.375rem;
+  --radius: 0.625rem;
 
-  /* shadcn semantic */
-  --background: oklch(0.13 0.008 270);
-  --foreground: oklch(0.97 0.003 270);
-  --card: oklch(0.17 0.008 270);
-  --card-foreground: oklch(0.95 0.005 270);
-  --popover: oklch(0.17 0.008 270);
-  --popover-foreground: oklch(0.95 0.005 270);
-  --primary: oklch(0.95 0.005 270);
-  --primary-foreground: oklch(0.17 0.008 270);
-  --secondary: oklch(0.22 0.01 270);
-  --secondary-foreground: oklch(0.95 0.005 270);
-  --muted: oklch(0.22 0.01 270);
-  --muted-foreground: oklch(0.72 0.012 270);
-  --accent: oklch(0.22 0.01 270);
-  --accent-foreground: oklch(0.95 0.005 270);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.28 0.01 270);
-  --input: oklch(0.28 0.01 270);
-  --ring: oklch(0.50 0.02 270);
+  /* shadcn semantic — all light */
+  --background: #ffffff;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+  --primary: #111827;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #3b82f6;
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
 
-  --sidebar: oklch(0.15 0.008 270);
-  --sidebar-foreground: oklch(0.95 0.005 270);
-  --sidebar-primary: oklch(0.95 0.005 270);
-  --sidebar-primary-foreground: oklch(0.15 0.008 270);
-  --sidebar-accent: oklch(0.22 0.01 270);
-  --sidebar-accent-foreground: oklch(0.95 0.005 270);
-  --sidebar-border: oklch(0.28 0.01 270);
-  --sidebar-ring: oklch(0.50 0.02 270);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #111827;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #3b82f6;
 
-  /* Arch custom */
-  --arch-surface: oklch(0.15 0.008 270);
-  --arch-surface-raised: oklch(0.20 0.01 270);
-  --arch-surface-overlay: oklch(0.14 0.008 270 / 90%);
-  --arch-text-primary: oklch(0.95 0.005 270);
-  --arch-text-secondary: oklch(0.82 0.008 270);
-  --arch-text-muted: oklch(0.68 0.01 270);
-  --arch-text-faint: oklch(0.52 0.01 270);
-  --arch-border-subtle: oklch(0.24 0.008 270);
-  --arch-border-default: oklch(0.30 0.01 270);
-  --arch-canvas-bg: oklch(0.11 0.008 270);
-  --arch-canvas-dot: oklch(0.22 0.008 270);
-  --arch-edge-default: oklch(0.40 0.012 270);
-  --arch-edge-selected: oklch(0.74 0.18 195);
-  --arch-node-selected-glow: oklch(0.72 0.18 195 / 20%);
-  --arch-handle: oklch(0.45 0.012 270);
-  --arch-handle-border: oklch(0.38 0.01 270);
-  --arch-node-bg: oklch(0.17 0.008 270);
-  --arch-node-border: oklch(0.28 0.01 270);
-  --arch-node-hover-border: oklch(0.38 0.012 270);
+  /* Arch custom — matching landing page aesthetic */
+  --arch-surface: #ffffff;
+  --arch-surface-raised: #f9fafb;
+  --arch-surface-overlay: rgba(255, 255, 255, 0.92);
+  --arch-text-primary: #111827;
+  --arch-text-secondary: #374151;
+  --arch-text-muted: #6b7280;
+  --arch-text-faint: #9ca3af;
+  --arch-border-subtle: #f3f4f6;
+  --arch-border-default: #e5e7eb;
+  --arch-canvas-bg: #f8f8f8;
+  --arch-canvas-dot: #e0e0e0;
+  --arch-edge-default: #d1d5db;
+  --arch-edge-selected: #3b82f6;
+  --arch-node-selected-glow: rgba(59, 130, 246, 0.15);
+  --arch-handle: #9ca3af;
+  --arch-handle-border: #d1d5db;
+  --arch-node-bg: #ffffff;
+  --arch-node-border: #e5e7eb;
+  --arch-node-hover-border: #d1d5db;
 }
 
-/* ===== LIGHT THEME ===== */
-.light {
-  --background: oklch(0.965 0.005 270);
-  --foreground: oklch(0.18 0.02 270);
-  --card: oklch(0.99 0.003 270);
-  --card-foreground: oklch(0.18 0.02 270);
-  --popover: oklch(0.99 0.003 270);
-  --popover-foreground: oklch(0.18 0.02 270);
-  --primary: oklch(0.22 0.02 270);
-  --primary-foreground: oklch(0.97 0.003 270);
-  --secondary: oklch(0.94 0.008 270);
-  --secondary-foreground: oklch(0.22 0.02 270);
-  --muted: oklch(0.94 0.008 270);
-  --muted-foreground: oklch(0.48 0.015 270);
-  --accent: oklch(0.94 0.008 270);
-  --accent-foreground: oklch(0.22 0.02 270);
-  --destructive: oklch(0.55 0.24 27);
-  --border: oklch(0.88 0.008 270);
-  --input: oklch(0.88 0.008 270);
-  --ring: oklch(0.62 0.015 270);
-
-  --sidebar: oklch(0.975 0.004 270);
-  --sidebar-foreground: oklch(0.18 0.02 270);
-  --sidebar-primary: oklch(0.22 0.02 270);
-  --sidebar-primary-foreground: oklch(0.97 0.003 270);
-  --sidebar-accent: oklch(0.94 0.008 270);
-  --sidebar-accent-foreground: oklch(0.22 0.02 270);
-  --sidebar-border: oklch(0.88 0.008 270);
-  --sidebar-ring: oklch(0.62 0.015 270);
-
-  /* Arch custom */
-  --arch-surface: oklch(0.99 0.003 270);
-  --arch-surface-raised: oklch(0.975 0.004 270);
-  --arch-surface-overlay: oklch(0.99 0.003 270 / 90%);
-  --arch-text-primary: oklch(0.18 0.02 270);
-  --arch-text-secondary: oklch(0.38 0.015 270);
-  --arch-text-muted: oklch(0.50 0.012 270);
-  --arch-text-faint: oklch(0.65 0.01 270);
-  --arch-border-subtle: oklch(0.91 0.006 270);
-  --arch-border-default: oklch(0.85 0.008 270);
-  --arch-canvas-bg: oklch(0.965 0.005 270);
-  --arch-canvas-dot: oklch(0.85 0.006 270);
-  --arch-edge-default: oklch(0.72 0.008 270);
-  --arch-edge-selected: oklch(0.55 0.18 195);
-  --arch-node-selected-glow: oklch(0.45 0.18 195 / 15%);
-  --arch-handle: oklch(0.65 0.008 270);
-  --arch-handle-border: oklch(0.72 0.006 270);
-  --arch-node-bg: oklch(0.99 0.003 270);
-  --arch-node-border: oklch(0.87 0.008 270);
-  --arch-node-hover-border: oklch(0.72 0.01 270);
+html {
+  scroll-behavior: smooth;
 }
 
 @layer base {
@@ -192,14 +144,9 @@
     -moz-osx-font-smoothing: grayscale;
     @apply bg-background text-foreground;
   }
-  #root {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
 }
 
-/* ReactFlow overrides — use our theme's CSS vars */
+/* ReactFlow overrides */
 .react-flow {
   --xy-background-color: var(--arch-canvas-bg);
   --xy-background-color-default: var(--arch-canvas-bg);
@@ -212,7 +159,7 @@
 .react-flow__minimap {
   background-color: var(--arch-surface) !important;
   border: 1px solid var(--arch-border-default) !important;
-  border-radius: 0.375rem !important;
+  border-radius: 0.625rem !important;
 }
 
 .react-flow__controls {
@@ -244,24 +191,18 @@
 
 /* ===== Custom scrollbars ===== */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.32 0.01 270);
+  background: #d1d5db;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.40 0.01 270);
-}
-.light ::-webkit-scrollbar-thumb {
-  background: oklch(0.80 0.008 270);
-}
-.light ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.70 0.01 270);
+  background: #9ca3af;
 }
 
 /* ===== Thinking indicator ===== */
@@ -282,4 +223,20 @@
 }
 .animated-edge {
   animation: dashFlow 0.5s linear infinite;
+}
+
+/* ===== Landing page marquee ===== */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-marquee-left {
+  animation: marquee-left 45s linear infinite;
+}
+.animate-marquee-right {
+  animation: marquee-right 45s linear infinite;
 }

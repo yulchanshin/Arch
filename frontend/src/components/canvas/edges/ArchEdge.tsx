@@ -54,7 +54,7 @@ function ArchEdgeComponent({
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               pointerEvents: 'all',
             }}
-            className="px-1.5 py-0.5 bg-background/90 backdrop-blur-sm border border-border rounded text-[10px] font-mono text-muted-foreground whitespace-nowrap"
+            className="px-2 py-0.5 bg-background/90 backdrop-blur-sm border border-border rounded-full text-[10px] font-mono text-muted-foreground whitespace-nowrap"
           >
             {label && <span>{label}</span>}
             {protocol && (

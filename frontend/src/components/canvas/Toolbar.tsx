@@ -5,10 +5,7 @@ import {
   Maximize,
   Undo2,
   Redo2,
-  MessageSquare,
   Save,
-  Sun,
-  Moon,
   Download,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -21,13 +18,11 @@ import { downloadPng } from '@/lib/exportPng';
 function ToolbarButton({
   onClick,
   disabled,
-  active,
   children,
   title,
 }: {
   onClick: () => void;
   disabled?: boolean;
-  active?: boolean;
   children: React.ReactNode;
   title: string;
 }) {
@@ -39,10 +34,9 @@ function ToolbarButton({
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       className={cn(
-        'p-1.5 rounded-md text-muted-foreground transition-colors',
-        'hover:bg-secondary hover:text-foreground',
-        'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted-foreground',
-        active && 'text-cyan-400 bg-secondary'
+        'p-1.5 rounded-lg text-gray-400 transition-colors',
+        'hover:bg-gray-100 hover:text-gray-600',
+        'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-400'
       )}
     >
       {children}
@@ -51,23 +45,24 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <div className="w-px h-4 bg-border-default" />;
+  return <div className="w-px h-4 bg-gray-200" />;
 }
 
 export function Toolbar() {
-  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow();
   const undo = useStore((s) => s.undo);
   const redo = useStore((s) => s.redo);
   const canUndo = useStore((s) => s.canUndo);
   const canRedo = useStore((s) => s.canRedo);
-  const chatOpen = useStore((s) => s.chatOpen);
-  const toggleChat = useStore((s) => s.toggleChat);
   const saveCurrentGraph = useStore((s) => s.saveCurrentGraph);
   const isSaving = useStore((s) => s.isSaving);
-  const theme = useStore((s) => s.theme);
-  const toggleTheme = useStore((s) => s.toggleTheme);
   const graphName = useStore((s) => s.metadata.name);
   const [isExporting, setIsExporting] = useState(false);
+  const [zoom, setZoom] = useState(100);
+
+  const updateZoom = () => {
+    setZoom(Math.round(getZoom() * 100));
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -83,22 +78,43 @@ export function Toolbar() {
   };
 
   return (
-    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10" data-toolbar>
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10" data-toolbar>
       <div
         className={cn(
-          'flex items-center gap-0.5 px-2 py-1',
-          'bg-surface-overlay backdrop-blur-md',
-          'border border-border-default rounded-md',
-          'shadow-sm'
+          'flex items-center gap-0.5 px-2.5 py-1.5',
+          'bg-white',
+          'border border-gray-200 rounded-xl',
+          'shadow-lg shadow-gray-200/50'
         )}
       >
-        <ToolbarButton onClick={() => zoomIn()} title="Zoom in">
-          <ZoomIn size={15} />
-        </ToolbarButton>
-        <ToolbarButton onClick={() => zoomOut()} title="Zoom out">
+        <ToolbarButton
+          onClick={() => { zoomOut(); setTimeout(updateZoom, 50); }}
+          title="Zoom out"
+        >
           <ZoomOut size={15} />
         </ToolbarButton>
-        <ToolbarButton onClick={() => fitView({ padding: 0.2, duration: 300 })} title="Fit view">
+
+        <span
+          className="text-[11px] font-mono text-gray-400 w-10 text-center tabular-nums cursor-pointer select-none hover:text-gray-600 transition-colors"
+          onClick={() => { fitView({ padding: 0.2, duration: 300 }); setTimeout(updateZoom, 350); }}
+          title="Reset zoom"
+        >
+          {zoom}%
+        </span>
+
+        <ToolbarButton
+          onClick={() => { zoomIn(); setTimeout(updateZoom, 50); }}
+          title="Zoom in"
+        >
+          <ZoomIn size={15} />
+        </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <ToolbarButton
+          onClick={() => fitView({ padding: 0.2, duration: 300 })}
+          title="Fit view"
+        >
           <Maximize size={15} />
         </ToolbarButton>
 
@@ -118,15 +134,6 @@ export function Toolbar() {
         </ToolbarButton>
         <ToolbarButton onClick={handleExport} disabled={isExporting} title="Export as PNG">
           <Download size={15} />
-        </ToolbarButton>
-        <ToolbarButton onClick={toggleChat} active={chatOpen} title="Toggle chat">
-          <MessageSquare size={15} />
-        </ToolbarButton>
-
-        <ToolbarDivider />
-
-        <ToolbarButton onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </ToolbarButton>
       </div>
     </div>

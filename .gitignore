@@ -33,10 +33,12 @@ Thumbs.db
 # Claude / AI development files
 claude.md
 CLAUDE.md
+IMPLEMENTATION.md
 IMPLEMENTATION_PLAN.md
 SUPABASE_PERSISTENCE_PLAN.md
 TECH_CATALOG_REFACTOR_PLAN.md
 .claude/
+.gemini/
 
 # Package manager locks (optional — uncomment if you want to exclude)
 # package-lock.json

@@ -1,59 +1,51 @@
 import type { StateCreator } from 'zustand';
 import type { AppStore } from './index';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'light';
+export type RightTab = 'Inspector' | 'Chat';
 
 export type UISlice = {
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
-  chatOpen: boolean;
-  inspectorOpen: boolean;
+  activeRightTab: RightTab;
+  rightPanelOpen: boolean;
   sidebarCollapsed: boolean;
   theme: Theme;
   selectNode: (id: string | null) => void;
   selectEdge: (id: string | null) => void;
+  setActiveRightTab: (tab: RightTab) => void;
+  toggleRightPanel: () => void;
+  toggleSidebar: () => void;
+  toggleTheme: () => void;
+
+  // Legacy compat
+  chatOpen: boolean;
+  inspectorOpen: boolean;
   toggleChat: () => void;
   toggleInspector: () => void;
-  toggleSidebar: () => void;
   setChatOpen: (open: boolean) => void;
-  toggleTheme: () => void;
 };
-
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
-  const stored = localStorage.getItem('arch-theme');
-  if (stored === 'light' || stored === 'dark') return stored;
-  return 'dark';
-}
-
-function applyTheme(theme: Theme) {
-  const root = document.documentElement;
-  if (theme === 'light') {
-    root.classList.add('light');
-  } else {
-    root.classList.remove('light');
-  }
-  localStorage.setItem('arch-theme', theme);
-}
-
-// Apply on load
-const initialTheme = getInitialTheme();
-if (typeof document !== 'undefined') {
-  applyTheme(initialTheme);
-}
 
 export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [], UISlice> = (set) => ({
   selectedNodeId: null,
   selectedEdgeId: null,
+  activeRightTab: 'Chat',
+  rightPanelOpen: true,
+  sidebarCollapsed: false,
+  theme: 'light' as Theme,
+
+  // Legacy compat
   chatOpen: true,
   inspectorOpen: false,
-  sidebarCollapsed: false,
-  theme: initialTheme,
 
   selectNode: (id) => {
     set((state) => {
       state.selectedNodeId = id;
       state.selectedEdgeId = null;
+      if (id !== null) {
+        state.activeRightTab = 'Inspector';
+        state.rightPanelOpen = true;
+      }
       state.inspectorOpen = id !== null;
     });
   },
@@ -62,19 +54,23 @@ export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [
     set((state) => {
       state.selectedEdgeId = id;
       state.selectedNodeId = null;
+      if (id !== null) {
+        state.activeRightTab = 'Inspector';
+        state.rightPanelOpen = true;
+      }
       state.inspectorOpen = id !== null;
     });
   },
 
-  toggleChat: () => {
+  setActiveRightTab: (tab) => {
     set((state) => {
-      state.chatOpen = !state.chatOpen;
+      state.activeRightTab = tab;
     });
   },
 
-  toggleInspector: () => {
+  toggleRightPanel: () => {
     set((state) => {
-      state.inspectorOpen = !state.inspectorOpen;
+      state.rightPanelOpen = !state.rightPanelOpen;
     });
   },
 
@@ -84,16 +80,26 @@ export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [
     });
   },
 
-  setChatOpen: (open) => {
+  // No-op — always light
+  toggleTheme: () => {},
+
+  // Legacy compat methods
+  toggleChat: () => {
     set((state) => {
-      state.chatOpen = open;
+      state.activeRightTab = 'Chat';
+      state.rightPanelOpen = true;
     });
   },
-
-  toggleTheme: () => {
+  toggleInspector: () => {
     set((state) => {
-      state.theme = state.theme === 'dark' ? 'light' : 'dark';
-      applyTheme(state.theme);
+      state.activeRightTab = 'Inspector';
+      state.rightPanelOpen = true;
+    });
+  },
+  setChatOpen: () => {
+    set((state) => {
+      state.activeRightTab = 'Chat';
+      state.rightPanelOpen = true;
     });
   },
 });

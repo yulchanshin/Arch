@@ -27,17 +27,18 @@ export function EmptyState() {
   return (
     <div className="absolute inset-0 flex items-center justify-center z-5 pointer-events-none">
       <div className="pointer-events-auto max-w-lg w-full px-6">
-        <div className={cn(
-          'rounded-md p-8',
-          'bg-background/90 backdrop-blur-sm',
-          'border border-border-default'
-        )}>
+        <div className="rounded-2xl p-8 bg-white border border-gray-200 shadow-xl shadow-gray-100/50">
           <div className="flex flex-col items-center text-center mb-8">
-            <Hexagon size={36} className="text-cyan-400 mb-4" />
-            <h1 className="text-xl font-semibold text-foreground mb-2">
+            <div className="relative mb-4">
+              <Hexagon size={36} className="text-gray-900" strokeWidth={1.5} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400" />
+              </div>
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
               What are you building?
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-500">
               Describe your system architecture and Arch will generate it for you.
             </p>
           </div>
@@ -52,19 +53,19 @@ export function EmptyState() {
                 placeholder="Describe your architecture..."
                 className={cn(
                   'flex-1 px-4 py-2.5 text-sm',
-                  'bg-secondary border border-border rounded-md',
-                  'text-foreground placeholder:text-muted-foreground',
-                  'focus:outline-none focus:ring-1 focus:ring-cyan-500/50'
+                  'bg-gray-50 border border-gray-200 rounded-xl',
+                  'text-gray-900 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300'
                 )}
               />
               <button
                 onClick={handleSubmit}
                 disabled={!prompt.trim() || isLoading}
                 className={cn(
-                  'p-2.5 rounded-md transition-colors',
-                  'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
-                  'hover:bg-cyan-500/20',
-                  'disabled:opacity-30 disabled:cursor-not-allowed'
+                  'p-2.5 rounded-xl transition-colors',
+                  prompt.trim() && !isLoading
+                    ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                 )}
               >
                 <ArrowRight size={16} />
@@ -78,10 +79,10 @@ export function EmptyState() {
                 key={example}
                 onClick={() => setPrompt(example)}
                 className={cn(
-                  'w-full text-left px-3 py-2 text-xs',
-                  'text-muted-foreground',
-                  'bg-secondary/60 border border-border rounded-md',
-                  'hover:bg-secondary hover:text-foreground',
+                  'w-full text-left px-3 py-2.5 text-xs',
+                  'text-gray-500',
+                  'bg-gray-50 border border-gray-100 rounded-xl',
+                  'hover:bg-gray-100 hover:text-gray-700 hover:border-gray-200',
                   'transition-colors'
                 )}
               >
