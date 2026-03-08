@@ -32,3 +32,42 @@ class ModifyResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+
+
+# ── Review / Scoring Models ──────────────────────────────
+
+class CostComponent(BaseModel):
+    name: str
+    tech: str
+    provider: str | None = None
+    monthly_cost: float
+    notes: str = ""
+
+
+class CostEstimate(BaseModel):
+    total_monthly: float
+    components: list[CostComponent] = []
+
+
+class ReviewFinding(BaseModel):
+    severity: str  # "critical" | "warning" | "info"
+    title: str
+    description: str
+    suggestion: str = ""
+
+
+class ArchReview(BaseModel):
+    overall_score: int
+    categories: dict[str, int]  # e.g. {"scalability": 75, ...}
+    cost_estimate: CostEstimate
+    findings: list[ReviewFinding] = []
+    summary: str
+
+
+class ReviewRequest(BaseModel):
+    graph: GraphState
+
+
+class ReviewResponse(BaseModel):
+    review: ArchReview
+

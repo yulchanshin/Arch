@@ -1,5 +1,8 @@
 import type { StateCreator } from 'zustand';
 import type { AppStore } from './index';
+import type { ArchReview } from '@/types/actions';
+import { reviewArchitecture } from '@/lib/api';
+import { toast } from 'sonner';
 
 export type Theme = 'light';
 export type RightTab = 'Inspector' | 'Chat';
@@ -18,6 +21,14 @@ export type UISlice = {
   toggleSidebar: () => void;
   toggleTheme: () => void;
 
+  // Review
+  reviewResult: ArchReview | null;
+  isReviewing: boolean;
+  reviewPanelOpen: boolean;
+  requestReview: () => Promise<void>;
+  clearReview: () => void;
+  setReviewPanelOpen: (open: boolean) => void;
+
   // Legacy compat
   chatOpen: boolean;
   inspectorOpen: boolean;
@@ -33,6 +44,11 @@ export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [
   rightPanelOpen: true,
   sidebarCollapsed: false,
   theme: 'light' as Theme,
+
+  // Review
+  reviewResult: null,
+  isReviewing: false,
+  reviewPanelOpen: false,
 
   // Legacy compat
   chatOpen: true,
@@ -101,5 +117,37 @@ export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [
       state.activeRightTab = 'Chat';
       state.rightPanelOpen = true;
     });
+  },
+
+  requestReview: async () => {
+    const { nodes, edges, isReviewing } = get();
+    if (isReviewing || nodes.length === 0) return;
+
+    set((state) => { state.isReviewing = true; });
+
+    try {
+      const review = await reviewArchitecture({ nodes, edges });
+      set((state) => {
+        state.reviewResult = review;
+        state.isReviewing = false;
+        state.reviewPanelOpen = false;
+      });
+      toast.success('Architecture review complete');
+    } catch (error) {
+      set((state) => { state.isReviewing = false; });
+      const message = error instanceof Error ? error.message : 'Review failed';
+      toast.error('Review failed', { description: message });
+    }
+  },
+
+  clearReview: () => {
+    set((state) => {
+      state.reviewResult = null;
+      state.reviewPanelOpen = false;
+    });
+  },
+
+  setReviewPanelOpen: (open) => {
+    set((state) => { state.reviewPanelOpen = open; });
   },
 });

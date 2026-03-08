@@ -9,10 +9,14 @@ from app.models.api import (
     GenerateResponse,
     ModifyRequest,
     ModifyResponse,
+    ReviewRequest,
+    ReviewResponse,
+    ArchReview,
 )
 from app.services.llm import (
     call_llm_generate,
     call_llm_modify,
+    call_llm_review,
     stream_llm_generate,
     stream_llm_modify,
 )
@@ -105,3 +109,19 @@ async def modify_stream(request: Request, req: ModifyRequest):
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+# ── Review endpoint ───────────────────────────────────────
+
+
+@router.post("/review", response_model=ReviewResponse)
+@limiter.limit("5/minute")
+async def review_architecture(request: Request, req: ReviewRequest):
+    try:
+        review_data = await call_llm_review(req.graph)
+        review = ArchReview(**review_data)
+        return ReviewResponse(review=review)
+    except Exception as e:
+        logger.error(f"Review failed: {e}")
+        raise HTTPException(status_code=502, detail=f"Architecture review failed: {str(e)}")
+

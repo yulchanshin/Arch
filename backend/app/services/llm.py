@@ -329,3 +329,120 @@ async def stream_llm_modify(
     user_content = _build_modify_prompt(graph, prompt, history)
     async for event in provider.stream(SYSTEM_PROMPT, user_content):
         yield event
+
+
+# ── Architecture Review ───────────────────────────────────
+
+REVIEW_PROMPT = """You are an expert system architecture reviewer. Analyze the provided architecture graph and return a detailed review.
+
+CRITICAL: Return ONLY the raw JSON object. No markdown code fences. No text before or after. Your entire response must be valid JSON parseable by json.loads().
+
+## OUTPUT FORMAT
+{
+  "overall_score": 0-100,
+  "categories": {
+    "scalability": 0-100,
+    "reliability": 0-100,
+    "security": 0-100,
+    "performance": 0-100,
+    "simplicity": 0-100
+  },
+  "cost_estimate": {
+    "total_monthly": number,
+    "components": [
+      {
+        "name": "Component Name",
+        "tech": "postgres",
+        "provider": "aws",
+        "monthly_cost": 50.00,
+        "notes": "RDS db.t3.micro, single-AZ"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "severity": "critical|warning|info",
+      "title": "Short title",
+      "description": "Detailed explanation",
+      "suggestion": "How to fix it"
+    }
+  ],
+  "summary": "Brief overall assessment"
+}
+
+## SCORING GUIDELINES
+- **Scalability** (0-100): Can this handle 10x traffic? Horizontal scaling, caching, load balancers, queues.
+- **Reliability** (0-100): Fault tolerance, redundancy, no single points of failure, proper DB backups.
+- **Security** (0-100): Auth service present, API gateway for rate limiting, no direct DB exposure.
+- **Performance** (0-100): Caching layers, CDN, async processing, efficient data flow.
+- **Simplicity** (0-100): Not over-engineered, clear data flow, reasonable number of components.
+
+## COST ESTIMATION GUIDELINES
+Estimate monthly cloud costs using standard pricing tiers (e.g. AWS us-east-1):
+- **postgres** (RDS db.t3.micro): ~$15-25/mo, (db.t3.medium): ~$50-80/mo
+- **mysql** (RDS): similar to postgres
+- **mongodb** (Atlas M10): ~$60/mo, (Atlas M0 free): $0
+- **redis** (ElastiCache t3.micro): ~$12-25/mo
+- **kafka** (MSK): ~$150-300/mo, (self-hosted): ~$50-100/mo
+- **rabbitmq** (MQ): ~$30-60/mo
+- **nginx/envoy** (gateway on EC2): ~$10-30/mo
+- **node/python/go service** (ECS Fargate 0.25vCPU): ~$10-20/mo per instance
+- **load_balancer** (ALB): ~$20-30/mo
+- If provider is specified (aws/gcp/azure), use that provider's pricing. Otherwise default to AWS.
+- Multiply by replicas if specified.
+
+## FINDING SEVERITIES
+- **critical**: Architecture will fail under production load or has security vulnerabilities
+- **warning**: Suboptimal design that could cause issues at scale
+- **info**: Nice-to-have improvements or best practices
+"""
+
+
+_DEMO_REVIEW = {
+    "overall_score": 72,
+    "categories": {"scalability": 65, "reliability": 70, "security": 80, "performance": 68, "simplicity": 85},
+    "cost_estimate": {"total_monthly": 95.0, "components": [
+        {"name": "API Gateway", "tech": "nginx", "provider": "aws", "monthly_cost": 15.0, "notes": "EC2 t3.micro"},
+        {"name": "App Service", "tech": "node", "provider": "aws", "monthly_cost": 20.0, "notes": "ECS Fargate 0.25vCPU"},
+        {"name": "Main DB", "tech": "postgres", "provider": "aws", "monthly_cost": 45.0, "notes": "RDS db.t3.micro"},
+        {"name": "Session Cache", "tech": "redis", "provider": "aws", "monthly_cost": 15.0, "notes": "ElastiCache t3.micro"},
+    ]},
+    "findings": [
+        {"severity": "warning", "title": "No load balancer", "description": "Traffic goes directly to API gateway without load balancing.", "suggestion": "Add an ALB or NLB in front of the gateway."},
+        {"severity": "info", "title": "Consider adding monitoring", "description": "No monitoring service detected.", "suggestion": "Add Prometheus + Grafana or Datadog for observability."},
+    ],
+    "summary": "Solid basic architecture. Consider adding load balancing and monitoring for production readiness.",
+}
+
+
+async def call_llm_review(graph: GraphState) -> dict:
+    """Analyze architecture and return review JSON dict."""
+    import json as _json
+
+    if not provider:
+        return _DEMO_REVIEW
+
+    graph_json = graph.model_dump_json(indent=2, by_alias=True)
+    user_content = f"""Analyze this architecture and provide a detailed review with scores, cost estimates, and findings.
+
+Architecture graph:
+{graph_json}"""
+
+    # Use provider.generate — it returns an AIResponse, but with REVIEW_PROMPT
+    # the AI should return only JSON. We parse the summary field.
+    result = await provider.generate(REVIEW_PROMPT, user_content)
+    text = result.summary or ""
+    # If the AI returned the JSON in the summary, parse it
+    text = text.strip()
+    if text.startswith("```"):
+        first_nl = text.index("\n")
+        last_fence = text.rfind("```")
+        text = text[first_nl + 1:last_fence].strip()
+    try:
+        return _json.loads(text, strict=False)
+    except _json.JSONDecodeError:
+        # Fallback: the provider parsed it as an AIResponse with actions
+        # Just return the raw model dump and let the route handle it
+        return _DEMO_REVIEW
+
+

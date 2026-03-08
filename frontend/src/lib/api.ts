@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './constants';
-import type { AIResponse, StreamEvent } from '@/types/actions';
+import type { AIResponse, StreamEvent, ArchReview } from '@/types/actions';
 import type { AppNode, AppEdge } from '@/types/graph';
 
 type ModifyRequest = {
@@ -177,3 +177,13 @@ export async function listGraphs(): Promise<{ graphs: GraphSummary[] }> {
 export async function deleteGraphById(id: string): Promise<void> {
   await fetchApi(`/api/graphs/${id}`, { method: 'DELETE' });
 }
+
+// ── Review / Scoring ─────────────────────────────────────
+
+export async function reviewArchitecture(
+  graph: { nodes: AppNode[]; edges: AppEdge[] }
+): Promise<ArchReview> {
+  const data = await request<{ review: ArchReview }>('/api/review', { graph });
+  return data.review;
+}
+

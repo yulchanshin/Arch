@@ -83,3 +83,32 @@ export type ToolCallState = {
   output?: Record<string, unknown>;
 };
 
+// ── Review / Scoring types ───────────────────────────────
+
+export type CostComponent = {
+  name: string;
+  tech: string;
+  provider: string | null;
+  monthly_cost: number;
+  notes: string;
+};
+
+export type CostEstimate = {
+  total_monthly: number;
+  components: CostComponent[];
+};
+
+export type ReviewFinding = {
+  severity: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  suggestion: string;
+};
+
+export type ArchReview = {
+  overall_score: number;
+  categories: Record<string, number>;
+  cost_estimate: CostEstimate;
+  findings: ReviewFinding[];
+  summary: string;
+};
