@@ -66,3 +66,20 @@ export type ChatMessage = {
   thought_process?: string;
   timestamp: string;
 };
+
+// ── Streaming types ──────────────────────────────────────
+
+export type StreamEvent =
+  | { type: 'token'; token: string }
+  | { type: 'tool_start'; name: string; input: Record<string, unknown> }
+  | { type: 'tool_end'; name: string; output: Record<string, unknown> }
+  | { type: 'done'; response: AIResponse }
+  | { type: 'error'; message: string };
+
+export type ToolCallState = {
+  name: string;
+  status: 'running' | 'done';
+  input: Record<string, unknown>;
+  output?: Record<string, unknown>;
+};
+

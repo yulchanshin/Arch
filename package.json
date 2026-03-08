@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently --kill-others --names \"frontend,backend\" --prefix-colors \"cyan,yellow\" \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000",
+    "dev:backend": "cd backend && .\\venv\\Scripts\\uvicorn app.main:app --reload --port 8000",
     "build": "cd frontend && npm run build",
     "typecheck": "cd frontend && npx tsc --noEmit"
   },

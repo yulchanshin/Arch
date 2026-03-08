@@ -1,15 +1,58 @@
 from __future__ import annotations
 import json
 import logging
-from anthropic import AsyncAnthropic
+import os
+from typing import AsyncIterator
 
 from app.config import ANTHROPIC_API_KEY, ANTHROPIC_MODEL
 from app.models.actions import AIResponse
 from app.models.graph import GraphState
+from app.services.providers.base import (
+    LLMProvider,
+    StreamEvent,
+    TokenEvent,
+    ToolCallStartEvent,
+    ToolCallEndEvent,
+    DoneEvent,
+)
 
 logger = logging.getLogger(__name__)
 
-client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+
+# ── Provider factory ───────────────────────────────────────
+
+
+def _create_provider() -> LLMProvider | None:
+    """Create LLM provider based on environment configuration.
+
+    Default is Gemini (free tier). Falls back to Anthropic if
+    LLM_PROVIDER=anthropic is set.  Returns None when no API key
+    is configured (demo mode).
+    """
+    provider_name = os.getenv("LLM_PROVIDER", "groq")
+
+    if provider_name == "anthropic":
+        if not ANTHROPIC_API_KEY:
+            return None
+        from app.services.providers.anthropic_provider import AnthropicProvider
+        return AnthropicProvider(api_key=ANTHROPIC_API_KEY, model=ANTHROPIC_MODEL)
+    elif provider_name == "gemini":
+        api_key = os.getenv("GEMINI_API_KEY", "")
+        if not api_key:
+            return None
+        from app.services.providers.gemini_provider import GeminiProvider
+        model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        return GeminiProvider(api_key=api_key, model=model)
+    else:
+        api_key = os.getenv("GROQ_API_KEY", "")
+        if not api_key:
+            return None
+        from app.services.providers.groq_provider import GroqProvider
+        model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        return GroqProvider(api_key=api_key, model=model)
+
+
+provider = _create_provider()
 
 # Static demo response returned when no API key is configured
 _DEMO_RESPONSE = AIResponse.model_validate({
@@ -204,15 +247,17 @@ User's request: {user_prompt}
 Analyze the current graph and return only the minimal actions needed to fulfill the user's request. Reference existing node IDs when connecting to existing nodes."""
 
 
+# ── Non-streaming API (preserved for fallback) ────────────
+
+
 async def call_llm(prompt: str, is_generate: bool = False) -> AIResponse:
-    if not ANTHROPIC_API_KEY:
+    if not provider:
         return _DEMO_RESPONSE
     if is_generate:
         user_content = _build_generate_prompt(prompt)
     else:
         raise ValueError("Use call_llm_modify for modifications")
-
-    return await _call_anthropic(user_content)
+    return await provider.generate(SYSTEM_PROMPT, user_content)
 
 
 async def call_llm_modify(
@@ -220,49 +265,39 @@ async def call_llm_modify(
     prompt: str,
     history: list[dict[str, str]],
 ) -> AIResponse:
-    if not ANTHROPIC_API_KEY:
+    if not provider:
         return _DEMO_RESPONSE
     user_content = _build_modify_prompt(graph, prompt, history)
-    return await _call_anthropic(user_content)
+    return await provider.generate(SYSTEM_PROMPT, user_content)
 
 
 async def call_llm_generate(prompt: str) -> AIResponse:
-    if not ANTHROPIC_API_KEY:
+    if not provider:
         return _DEMO_RESPONSE
     user_content = _build_generate_prompt(prompt)
-    return await _call_anthropic(user_content)
+    return await provider.generate(SYSTEM_PROMPT, user_content)
 
 
-async def _call_anthropic(user_content: str, retry: bool = True) -> AIResponse:
-    try:
-        response = await client.messages.create(
-            model=ANTHROPIC_MODEL,
-            system=SYSTEM_PROMPT,
-            messages=[
-                {"role": "user", "content": user_content},
-            ],
-            temperature=0.3,
-            max_tokens=4096,
-        )
+# ── Streaming API (new) ───────────────────────────────────
 
-        content = response.content[0].text
-        if not content:
-            raise ValueError("Empty response from LLM")
 
-        # Strip markdown fences if present
-        text = content.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-            text = text.strip()
+async def stream_llm_generate(prompt: str) -> AsyncIterator[StreamEvent]:
+    if not provider:
+        yield DoneEvent(response=_DEMO_RESPONSE)
+        return
+    user_content = _build_generate_prompt(prompt)
+    async for event in provider.stream(SYSTEM_PROMPT, user_content):
+        yield event
 
-        parsed = json.loads(text)
-        return AIResponse.model_validate(parsed)
 
-    except Exception as e:
-        if retry:
-            logger.warning(f"LLM call failed, retrying: {e}")
-            return await _call_anthropic(user_content, retry=False)
-        logger.error(f"LLM call failed after retry: {e}")
-        raise
+async def stream_llm_modify(
+    graph: GraphState,
+    prompt: str,
+    history: list[dict[str, str]],
+) -> AsyncIterator[StreamEvent]:
+    if not provider:
+        yield DoneEvent(response=_DEMO_RESPONSE)
+        return
+    user_content = _build_modify_prompt(graph, prompt, history)
+    async for event in provider.stream(SYSTEM_PROMPT, user_content):
+        yield event

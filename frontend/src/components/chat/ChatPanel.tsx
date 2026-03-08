@@ -3,10 +3,12 @@ import { Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 import { useStore } from '@/store';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
+import { StreamingMessage } from './StreamingMessage';
 
 export function ChatPanel() {
   const messages = useStore((s) => s.messages);
   const isLoading = useStore((s) => s.isLoading);
+  const isStreaming = useStore((s) => s.isStreaming);
   const error = useStore((s) => s.error);
   const retryLastMessage = useStore((s) => s.retryLastMessage);
   const clearError = useStore((s) => s.clearError);
@@ -14,7 +16,7 @@ export function ChatPanel() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, error]);
+  }, [messages, error, isStreaming]);
 
   return (
     <div className="flex flex-col h-full">
@@ -66,7 +68,11 @@ export function ChatPanel() {
           </div>
         )}
 
-        {isLoading && (
+        {/* Streaming message (replaces old loading indicator during streaming) */}
+        {isStreaming && <StreamingMessage />}
+
+        {/* Fallback loading indicator (only when not streaming, e.g. non-streaming fallback) */}
+        {isLoading && !isStreaming && (
           <div className="flex gap-2.5">
             <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5 bg-blue-50">
               <Sparkles size={12} className="text-blue-500" />

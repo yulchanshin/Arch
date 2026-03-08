@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
-import type { ChatMessage } from '@/types/actions';
+import type { ChatMessage, ToolCallState } from '@/types/actions';
 import type { AppStore } from './index';
-import { generateGraph, modifyGraph } from '@/lib/api';
+import { streamGenerate, streamModify } from '@/lib/api';
 import { toast } from 'sonner';
 
 export type ChatSlice = {
@@ -10,6 +10,12 @@ export type ChatSlice = {
   error: string | null;
   lastFailedPrompt: string | null;
   _pendingFitView: boolean;
+
+  // Streaming state
+  isStreaming: boolean;
+  streamTokens: string;
+  activeToolCalls: ToolCallState[];
+
   sendMessage: (prompt: string) => Promise<void>;
   retryLastMessage: () => Promise<void>;
   clearMessages: () => void;
@@ -23,6 +29,11 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
   error: null,
   lastFailedPrompt: null,
   _pendingFitView: false,
+
+  // Streaming
+  isStreaming: false,
+  streamTokens: '',
+  activeToolCalls: [],
 
   sendMessage: async (prompt) => {
     const userMessage: ChatMessage = {
@@ -39,6 +50,9 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
     set((state) => {
       state.messages.push(userMessage);
       state.isLoading = true;
+      state.isStreaming = true;
+      state.streamTokens = '';
+      state.activeToolCalls = [];
       state.error = null;
     });
 
@@ -51,18 +65,60 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
         content: m.content,
       }));
 
-      const aiResponse = isEmptyCanvas
-        ? await generateGraph(prompt)
-        : await modifyGraph(
-            { nodes, edges },
-            prompt,
-            chatHistory
-          );
+      // Use streaming API
+      const stream = isEmptyCanvas
+        ? streamGenerate(prompt)
+        : streamModify({ nodes, edges }, prompt, chatHistory);
+
+      let finalResponse = null;
+
+      for await (const event of stream) {
+        switch (event.type) {
+          case 'token':
+            set((state) => {
+              state.streamTokens += event.token;
+            });
+            break;
+
+          case 'tool_start':
+            set((state) => {
+              state.activeToolCalls.push({
+                name: event.name,
+                status: 'running',
+                input: event.input,
+              });
+            });
+            break;
+
+          case 'tool_end':
+            set((state) => {
+              const tc = state.activeToolCalls.find(
+                (t) => t.name === event.name && t.status === 'running'
+              );
+              if (tc) {
+                tc.status = 'done';
+                tc.output = event.output;
+              }
+            });
+            break;
+
+          case 'done':
+            finalResponse = event.response;
+            break;
+
+          case 'error':
+            throw new Error(event.message);
+        }
+      }
+
+      if (!finalResponse) {
+        throw new Error('Stream ended without a response');
+      }
 
       // Apply the patch
-      const hasNewNodes = aiResponse.actions.some((a) => a.op === 'add_node');
-      if (aiResponse.actions.length > 0) {
-        get().applyPatch(aiResponse.actions);
+      const hasNewNodes = finalResponse.actions.some((a) => a.op === 'add_node');
+      if (finalResponse.actions.length > 0) {
+        get().applyPatch(finalResponse.actions);
       } else {
         // No actions = undo the empty snapshot
         set((state) => {
@@ -72,8 +128,8 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
         });
       }
 
-      const summary = aiResponse.summary
-        || (aiResponse.actions.length === 0
+      const summary = finalResponse.summary
+        || (finalResponse.actions.length === 0
           ? "I understood your request but didn't generate any changes. Could you be more specific?"
           : 'Done.');
 
@@ -81,13 +137,16 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
         id: crypto.randomUUID(),
         role: 'assistant',
         content: summary,
-        thought_process: aiResponse.thought_process,
+        thought_process: finalResponse.thought_process,
         timestamp: new Date().toISOString(),
       };
 
       set((state) => {
         state.messages.push(assistantMessage);
         state.isLoading = false;
+        state.isStreaming = false;
+        state.streamTokens = '';
+        state.activeToolCalls = [];
         if (hasNewNodes) {
           state._pendingFitView = true;
         }
@@ -96,6 +155,9 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
       const message = error instanceof Error ? error.message : 'Something went wrong';
       set((state) => {
         state.isLoading = false;
+        state.isStreaming = false;
+        state.streamTokens = '';
+        state.activeToolCalls = [];
         state.error = message;
         state.lastFailedPrompt = prompt;
       });
