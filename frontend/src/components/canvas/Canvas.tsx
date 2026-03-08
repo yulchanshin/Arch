@@ -21,6 +21,8 @@ import { LoadBalancerNode } from './nodes/LoadBalancerNode';
 import { ArchEdge } from './edges/ArchEdge';
 import { NODE_TYPE_CONFIG } from '@/lib/constants';
 import { ContextMenu, useContextMenuItems, type ContextMenuState } from './ContextMenu';
+import { ScoreBadge } from './ScoreBadge';
+import { ReviewPanel } from './ReviewPanel';
 
 const nodeTypes: NodeTypes = {
   service: ServiceNode,
@@ -244,6 +246,9 @@ export function Canvas() {
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      <ScoreBadge />
+      <ReviewPanel />
     </div>
   );
 }

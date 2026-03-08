@@ -37,7 +37,7 @@ export type UISlice = {
   setChatOpen: (open: boolean) => void;
 };
 
-export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [], UISlice> = (set) => ({
+export const createUISlice: StateCreator<AppStore, [['zustand/immer', never]], [], UISlice> = (set, get) => ({
   selectedNodeId: null,
   selectedEdgeId: null,
   activeRightTab: 'Chat',

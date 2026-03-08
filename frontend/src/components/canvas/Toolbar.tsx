@@ -7,6 +7,7 @@ import {
   Redo2,
   Save,
   Download,
+  ClipboardCheck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useReactFlow } from '@xyflow/react';
@@ -57,6 +58,8 @@ export function Toolbar() {
   const saveCurrentGraph = useStore((s) => s.saveCurrentGraph);
   const isSaving = useStore((s) => s.isSaving);
   const graphName = useStore((s) => s.metadata.name);
+  const requestReview = useStore((s) => s.requestReview);
+  const isReviewing = useStore((s) => s.isReviewing);
   const [isExporting, setIsExporting] = useState(false);
   const [zoom, setZoom] = useState(100);
 
@@ -135,6 +138,25 @@ export function Toolbar() {
         <ToolbarButton onClick={handleExport} disabled={isExporting} title="Export as PNG">
           <Download size={15} />
         </ToolbarButton>
+
+        <ToolbarDivider />
+
+        <motion.button
+          onClick={requestReview}
+          disabled={isReviewing}
+          title="Review Architecture"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors',
+            isReviewing
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+          )}
+        >
+          <ClipboardCheck size={13} />
+          {isReviewing ? 'Reviewing...' : 'Review'}
+        </motion.button>
       </div>
     </div>
   );
