@@ -66,7 +66,8 @@ async def modify_graph(request: Request, req: ModifyRequest):
 async def generate_stream(request: Request, req: GenerateRequest):
     async def event_generator():
         try:
-            async for event in stream_llm_generate(req.prompt):
+            history = [{"role": m.role, "content": m.content} for m in req.history]
+            async for event in stream_llm_generate(req.prompt, history):
                 if isinstance(event, TokenEvent):
                     yield f"data: {json.dumps({'type': 'token', 'token': event.token})}\n\n"
                 elif isinstance(event, ToolCallStartEvent):

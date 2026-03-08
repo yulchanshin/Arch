@@ -44,7 +44,7 @@ class AnthropicProvider(LLMProvider):
             max_tokens=4096,
         )
         text = _strip_markdown_fences(response.content[0].text)
-        parsed = json.loads(text)
+        parsed = json.loads(text, strict=False)
         return AIResponse.model_validate(parsed)
 
     async def stream(self, system: str, user_content: str) -> AsyncIterator[StreamEvent]:
@@ -73,5 +73,5 @@ class AnthropicProvider(LLMProvider):
         )
 
         cleaned = _strip_markdown_fences(full_text)
-        parsed = json.loads(cleaned)
+        parsed = json.loads(cleaned, strict=False)
         yield DoneEvent(response=AIResponse.model_validate(parsed))

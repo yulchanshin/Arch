@@ -1,5 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import { useStore } from '@/store';
 import { ToolCallCard } from './ToolCallCard';
 
@@ -29,10 +30,10 @@ export function StreamingMessage() {
           {/* Streaming text */}
           {streamTokens && (
             <div className="rounded-xl rounded-bl-sm bg-gray-50 border border-gray-100 px-3 py-2 mt-1">
-              <p className="text-[13px] text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {streamTokens}
+              <div className="text-[13px] text-gray-700 leading-relaxed chat-md">
+                <ReactMarkdown>{streamTokens}</ReactMarkdown>
                 <span className="inline-block w-0.5 h-3.5 bg-blue-400 ml-0.5 animate-pulse align-middle" />
-              </p>
+              </div>
             </div>
           )}
 

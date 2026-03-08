@@ -10,6 +10,7 @@ type ModifyRequest = {
 
 type GenerateRequest = {
   prompt: string;
+  history: { role: string; content: string }[];
 };
 
 async function request<T>(path: string, body: unknown): Promise<T> {
@@ -53,7 +54,7 @@ async function fetchApi<T>(
 }
 
 export async function generateGraph(prompt: string): Promise<AIResponse> {
-  const body: GenerateRequest = { prompt };
+  const body: GenerateRequest = { prompt, history: [] };
   const data = await request<{ ai_response: AIResponse }>('/api/generate', body);
   return data.ai_response;
 }
@@ -92,11 +93,11 @@ async function* readSSE(res: Response): AsyncGenerator<StreamEvent> {
   }
 }
 
-export async function* streamGenerate(prompt: string): AsyncGenerator<StreamEvent> {
+export async function* streamGenerate(prompt: string, history: { role: string; content: string }[] = []): AsyncGenerator<StreamEvent> {
   const res = await fetch(`${API_BASE_URL}/api/generate/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, history }),
   });
 
   if (!res.ok) {

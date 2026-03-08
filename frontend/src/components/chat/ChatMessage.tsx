@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import type { ChatMessage as ChatMessageType } from '@/types/actions';
 
 type Props = {
@@ -30,9 +31,9 @@ export function ChatMessage({ message }: Props) {
           </div>
           <div className="max-w-[85%]">
             <div className="rounded-xl rounded-bl-sm bg-gray-50 border border-gray-100 px-3 py-2">
-              <p className="text-[13px] text-gray-700 leading-relaxed">
-                {message.content}
-              </p>
+              <div className="text-[13px] text-gray-700 leading-relaxed chat-md">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              </div>
             </div>
             {message.thought_process && (
               <div className="mt-1">

@@ -13,6 +13,7 @@ class ChatMessage(BaseModel):
 
 class GenerateRequest(BaseModel):
     prompt: str
+    history: list[ChatMessage] = []
 
 
 class ModifyRequest(BaseModel):

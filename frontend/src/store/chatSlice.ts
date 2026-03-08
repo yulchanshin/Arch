@@ -67,7 +67,7 @@ export const createChatSlice: StateCreator<AppStore, [['zustand/immer', never]],
 
       // Use streaming API
       const stream = isEmptyCanvas
-        ? streamGenerate(prompt)
+        ? streamGenerate(prompt, chatHistory)
         : streamModify({ nodes, edges }, prompt, chatHistory);
 
       let finalResponse = null;
