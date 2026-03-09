@@ -8,6 +8,7 @@ from slowapi.errors import RateLimitExceeded
 from app.config import CORS_ORIGINS
 from app.routes.graph import router as graph_router
 from app.routes.persistence import router as persistence_router
+from app.routes.projects import router as projects_router
 from app.middleware.errors import error_handler
 from app.middleware.rate_limit import limiter
 
@@ -30,6 +31,7 @@ app.middleware("http")(error_handler)
 
 app.include_router(graph_router)
 app.include_router(persistence_router)
+app.include_router(projects_router)
 
 
 @app.get("/health")
