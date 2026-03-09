@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollPosition } from '@/hooks/useScrollPosition';
 import { Hexagon, Menu, X } from 'lucide-react';
+import { useStore } from '@/store';
 
 export function LandingNavbar() {
   const scrollY = useScrollPosition();
   const scrolled = scrollY > 50;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const user = useStore((s) => s.user);
+  const isAuthed = !!user;
 
   return (
     <motion.nav
@@ -51,18 +54,29 @@ export function LandingNavbar() {
           >
             How it Works
           </a>
-          <a
-            href="/login"
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            Log in
-          </a>
-          <a
-            href="/signup"
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
-          >
-            Get Started Free
-          </a>
+          {isAuthed ? (
+            <a
+              href="/dashboard"
+              className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
+            >
+              Dashboard
+            </a>
+          ) : (
+            <>
+              <a
+                href="/login"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Log in
+              </a>
+              <a
+                href="/signup"
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
+              >
+                Get Started Free
+              </a>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -96,18 +110,29 @@ export function LandingNavbar() {
               >
                 How it Works
               </a>
-              <a
-                href="/login"
-                className="block text-sm text-gray-600 hover:text-gray-900 py-1"
-              >
-                Log in
-              </a>
-              <a
-                href="/signup"
-                className="block w-full text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium"
-              >
-                Get Started Free
-              </a>
+              {isAuthed ? (
+                <a
+                  href="/dashboard"
+                  className="block w-full text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium"
+                >
+                  Dashboard
+                </a>
+              ) : (
+                <>
+                  <a
+                    href="/login"
+                    className="block text-sm text-gray-600 hover:text-gray-900 py-1"
+                  >
+                    Log in
+                  </a>
+                  <a
+                    href="/signup"
+                    className="block w-full text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium"
+                  >
+                    Get Started Free
+                  </a>
+                </>
+              )}
             </div>
           </motion.div>
         )}

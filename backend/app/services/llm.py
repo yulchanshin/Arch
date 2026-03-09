@@ -428,21 +428,11 @@ async def call_llm_review(graph: GraphState) -> dict:
 Architecture graph:
 {graph_json}"""
 
-    # Use provider.generate — it returns an AIResponse, but with REVIEW_PROMPT
-    # the AI should return only JSON. We parse the summary field.
-    result = await provider.generate(REVIEW_PROMPT, user_content)
-    text = result.summary or ""
-    # If the AI returned the JSON in the summary, parse it
-    text = text.strip()
-    if text.startswith("```"):
-        first_nl = text.index("\n")
-        last_fence = text.rfind("```")
-        text = text[first_nl + 1:last_fence].strip()
+    text = await provider.generate_text(REVIEW_PROMPT, user_content)
     try:
         return _json.loads(text, strict=False)
     except _json.JSONDecodeError:
-        # Fallback: the provider parsed it as an AIResponse with actions
-        # Just return the raw model dump and let the route handle it
+        logger.warning("Review JSON parse failed, returning demo review")
         return _DEMO_REVIEW
 
 

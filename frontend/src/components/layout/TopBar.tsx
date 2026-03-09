@@ -6,6 +6,8 @@ import { useStore } from '@/store';
 export function TopBar() {
   const metadata = useStore((s) => s.metadata);
   const renameGraph = useStore((s) => s.renameGraph);
+  const renameProject = useStore((s) => s.renameProject);
+  const currentProject = useStore((s) => s.currentProject);
   const user = useStore((s) => s.user);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -35,7 +37,10 @@ export function TopBar() {
             defaultValue={metadata.name}
             onBlur={(e) => {
               const val = e.currentTarget.value.trim();
-              if (val && val !== metadata.name) renameGraph(val);
+              if (val && val !== metadata.name) {
+                renameGraph(val);
+                if (currentProject) renameProject(currentProject.id, val);
+              }
               setIsEditing(false);
             }}
             onKeyDown={(e) => {

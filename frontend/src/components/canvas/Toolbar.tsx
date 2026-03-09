@@ -56,6 +56,7 @@ export function Toolbar() {
   const canUndo = useStore((s) => s.canUndo);
   const canRedo = useStore((s) => s.canRedo);
   const saveCurrentGraph = useStore((s) => s.saveCurrentGraph);
+  const saveCurrentIteration = useStore((s) => s.saveCurrentIteration);
   const isSaving = useStore((s) => s.isSaving);
   const graphName = useStore((s) => s.metadata.name);
   const requestReview = useStore((s) => s.requestReview);
@@ -132,7 +133,7 @@ export function Toolbar() {
 
         <ToolbarDivider />
 
-        <ToolbarButton onClick={saveCurrentGraph} disabled={isSaving} title="Save (Cmd+S)">
+        <ToolbarButton onClick={() => { saveCurrentGraph(); saveCurrentIteration(); }} disabled={isSaving} title="Save (Cmd+S)">
           <Save size={15} />
         </ToolbarButton>
         <ToolbarButton onClick={handleExport} disabled={isExporting} title="Export as PNG">

@@ -6,6 +6,7 @@ export function useKeyboardShortcuts() {
   const redo = useStore((s) => s.redo);
   const toggleChat = useStore((s) => s.toggleChat);
   const saveCurrentGraph = useStore((s) => s.saveCurrentGraph);
+  const saveCurrentIteration = useStore((s) => s.saveCurrentIteration);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -15,6 +16,7 @@ export function useKeyboardShortcuts() {
       if (isMod && e.key === 's') {
         e.preventDefault();
         saveCurrentGraph();
+        saveCurrentIteration();
         return;
       }
 
@@ -40,5 +42,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [undo, redo, toggleChat, saveCurrentGraph]);
+  }, [undo, redo, toggleChat, saveCurrentGraph, saveCurrentIteration]);
 }

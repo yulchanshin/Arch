@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from supabase import create_client, Client
 
-from app.config import SUPABASE_URL, SUPABASE_KEY
+from app.config import SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +12,28 @@ _client: Client | None = None
 def _get_client() -> Client:
     global _client
     if _client is None:
-        if not SUPABASE_URL or not SUPABASE_KEY:
-            raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set")
-        _client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+            raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
+        _client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     return _client
 
 
 # ── Projects ─────────────────────────────────────────────
+
+def _project_to_dict(row: dict, node_count: int = 0, iteration_count: int = 0, first_iteration_id: str | None = None) -> dict:
+    result = {
+        "id": row["id"],
+        "name": row["name"],
+        "description": row.get("description"),
+        "nodeCount": node_count,
+        "iterationCount": iteration_count,
+        "createdAt": row["created_at"],
+        "updatedAt": row["updated_at"],
+    }
+    if first_iteration_id:
+        result["firstIterationId"] = first_iteration_id
+    return result
+
 
 def create_project(user_id: str, name: str, description: str | None = None) -> dict:
     client = _get_client()
@@ -35,14 +50,15 @@ def create_project(user_id: str, name: str, description: str | None = None) -> d
         .execute()
     )
     first_iter = iter_result.data[0]
-    return {**row, "nodeCount": 0, "iterationCount": 1, "firstIterationId": first_iter["id"]}
+    return _project_to_dict(row, node_count=0, iteration_count=1, first_iteration_id=first_iter["id"])
 
 
 def list_projects(user_id: str) -> list[dict]:
     client = _get_client()
-    projects = (
+    # Single query: projects + their iterations via nested select (avoids N+1)
+    rows = (
         client.table("projects")
-        .select("id, name, description, created_at, updated_at")
+        .select("id, name, description, created_at, updated_at, iterations(id, nodes, ordinal)")
         .eq("user_id", user_id)
         .order("updated_at", desc=True)
         .limit(50)
@@ -50,19 +66,18 @@ def list_projects(user_id: str) -> list[dict]:
     ).data
 
     results = []
-    for p in projects:
-        iters = (
-            client.table("iterations")
-            .select("id, nodes")
-            .eq("project_id", p["id"])
-            .execute()
-        ).data
+    for p in rows:
+        iters = sorted(p.get("iterations") or [], key=lambda i: i.get("ordinal", 0))
         node_count = sum(len(i.get("nodes") or []) for i in iters)
-        results.append({
-            **p,
-            "nodeCount": node_count,
-            "iterationCount": len(iters),
-        })
+        first = iters[0] if iters else None
+        d = _project_to_dict(p, node_count=node_count, iteration_count=len(iters),
+                             first_iteration_id=first["id"] if first else None)
+        if first:
+            d["previewNodes"] = [
+                {"type": n.get("type", "service"), "x": n.get("position", {}).get("x", 0), "y": n.get("position", {}).get("y", 0)}
+                for n in (first.get("nodes") or [])
+            ]
+        results.append(d)
     return results
 
 

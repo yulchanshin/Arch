@@ -48,6 +48,20 @@ class ErrorEvent(StreamEvent):
     message: str
 
 
+# ── Shared utilities ──────────────────────────────────────
+
+
+def strip_markdown_fences(text: str) -> str:
+    """Remove ```json ... ``` wrappers if present."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+    return text
+
+
 # ── LLM provider ABC ──────────────────────────────────────
 
 
@@ -57,6 +71,11 @@ class LLMProvider(ABC):
     @abstractmethod
     async def generate(self, system: str, user_content: str) -> AIResponse:
         """Non-streaming generation. Returns a complete AIResponse."""
+        ...
+
+    @abstractmethod
+    async def generate_text(self, system: str, user_content: str) -> str:
+        """Non-streaming generation. Returns raw text without AIResponse parsing."""
         ...
 
     @abstractmethod

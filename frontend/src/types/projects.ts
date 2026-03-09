@@ -1,3 +1,9 @@
+export type PreviewNode = {
+  type: string;
+  x: number;
+  y: number;
+};
+
 export type Project = {
   id: string;
   name: string;
@@ -6,6 +12,8 @@ export type Project = {
   iterationCount: number;
   createdAt: string;
   updatedAt: string;
+  firstIterationId?: string;
+  previewNodes?: PreviewNode[];
 };
 
 export type Iteration = {

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ReactFlowProvider } from '@xyflow/react';
 import { TopBar } from './TopBar';
 import { LeftSidebar } from './LeftSidebar';
@@ -12,6 +14,28 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 function LayoutInner() {
   useKeyboardShortcuts();
   const nodes = useStore((s) => s.nodes);
+  const projects = useStore((s) => s.projects);
+  const currentProject = useStore((s) => s.currentProject);
+  const setCurrentProject = useStore((s) => s.setCurrentProject);
+  const renameGraph = useStore((s) => s.renameGraph);
+  const loadIteration = useStore((s) => s.loadIteration);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const projectId = searchParams.get('project');
+    if (!projectId) return;
+    // Find project in already-fetched list
+    const project = projects.find((p) => p.id === projectId);
+    if (project && currentProject?.id !== project.id) {
+      setCurrentProject(project);
+      renameGraph(project.name);
+      // Load the first iteration if available
+      if (project.firstIterationId) {
+        loadIteration(project.firstIterationId);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, projects]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-white">

@@ -79,9 +79,11 @@ export function Dashboard() {
   const [sortOpen, setSortOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!authLoading && user) fetchProjects();
-  }, [authLoading, user, fetchProjects]);
+    if (!authLoading && userId) fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, userId]);
 
   const filtered = sortProjects(
     projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase())),

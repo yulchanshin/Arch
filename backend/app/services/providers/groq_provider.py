@@ -14,20 +14,10 @@ from .base import (
     ToolCallStartEvent,
     ToolCallEndEvent,
     DoneEvent,
+    strip_markdown_fences,
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _strip_markdown_fences(text: str) -> str:
-    """Remove ```json ... ``` wrappers if present."""
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-    return text
 
 
 class GroqProvider(LLMProvider):
@@ -35,7 +25,7 @@ class GroqProvider(LLMProvider):
         self.client = AsyncGroq(api_key=api_key)
         self.model = model
 
-    async def generate(self, system: str, user_content: str) -> AIResponse:
+    async def generate_text(self, system: str, user_content: str) -> str:
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -45,9 +35,11 @@ class GroqProvider(LLMProvider):
             temperature=0.3,
             max_tokens=4096,
         )
-        text = _strip_markdown_fences(response.choices[0].message.content or "")
-        parsed = json.loads(text, strict=False)
-        return AIResponse.model_validate(parsed)
+        return strip_markdown_fences(response.choices[0].message.content or "")
+
+    async def generate(self, system: str, user_content: str) -> AIResponse:
+        text = await self.generate_text(system, user_content)
+        return AIResponse.model_validate(json.loads(text, strict=False))
 
     async def stream(self, system: str, user_content: str) -> AsyncIterator[StreamEvent]:
         yield ToolCallStartEvent(
@@ -78,6 +70,6 @@ class GroqProvider(LLMProvider):
             tool_output={"status": "complete", "length": len(full_text)},
         )
 
-        cleaned = _strip_markdown_fences(full_text)
+        cleaned = strip_markdown_fences(full_text)
         parsed = json.loads(cleaned, strict=False)
         yield DoneEvent(response=AIResponse.model_validate(parsed))
